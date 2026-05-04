@@ -11,8 +11,9 @@ data = get_values()
 
 pygame.init()
 pygame.display.set_caption("fly_in")
-screen = pygame.display.set_mode((1280, 700))
-display = pygame.Surface((1280, 700), pygame.SRCALPHA)
+screen = pygame.display.set_mode((1200, 700))
+display = pygame.Surface((1200, 700), pygame.SRCALPHA)
+menu = pygame.Surface((500,600), pygame.SRCALPHA)
 ground = pygame.image.load("assets/Ground/ground.png")
 drone_img = pygame.image.load("assets/Drone/tile_040.png")
 frame = 0
@@ -92,9 +93,23 @@ drone = Drone(start)
 clock = pygame.time.Clock()
 next_hub = drone.get_next_hub()
 dis = distance((drone.x, drone.y), (next_hub.position[0], next_hub.position[1]))
-font = pygame.font.Font(None, 20)
 
 SPACE = 2
+
+def draw_text(text: str, font):
+    font = pygame.font.Font(None, font)
+    text = font.render(text, True, rgb("black"))
+    return text
+
+def draw_menu(name, pos, zone, color, size):
+    menu.fill(rgb("white"))
+    menu.blit(draw_text(f"name: {name}", 30), (200, 40))
+    menu.blit(draw_text(f"position: {pos}", 30), (200, 80))
+    menu.blit(draw_text(f"type: {zone}", 30), (200, 120))
+    menu.blit(draw_text(f"color: {color}", 30), (200, 160))
+    menu.blit(draw_text(f"size: {size}", 30), (200, 200))
+
+is_menu_acitve = False
 while True:
     display.fill(rgb("orange"))
     xs, ys = img.get_size()
@@ -115,11 +130,17 @@ while True:
             pygame.draw.line(display, rgb("cyan"), (x + (ys / 2), y + (ys / 4)), (xh + (ys / 2), yh + (ys / 4)))
         rect = box.get_rect(topleft=(x, y))
         if rect.collidepoint(xm, xy):
-            text = font.render(hub.name, True, rgb("black"))
-            display.blit(text, (x + xs / 4, y - ys / 2))
+            display.blit(draw_text(hub.name, xs), (x + xs / 4, y - ys / 2))
             mouse = pygame.mouse.get_just_pressed()
             if mouse[0]:
-                print(f"name : {hub.name}\npos : {hub.position}\ncolor : {hub.color}\ntype : {hub.zone}")
+                draw_menu(hub.name, hub.position, hub.zone, hub.color, hub.size)
+                is_menu_acitve = True
+    if is_menu_acitve:
+        quit = pygame.Surface((50,50), pygame.SRCALPHA)
+        quit.fill(rgb("red"))
+        quit.blit(draw_text(' X', 60), (0 , 0))
+        menu.blit(quit, (0, 0))
+        display.blit(menu,(780,0))
     xd, yd = draw_pos((drone.x * SPACE, drone.y * SPACE))
     xn = next_hub.position[0]
     yn = next_hub.position[1]
@@ -148,6 +169,8 @@ while True:
     mouse = pygame.mouse.get_just_pressed()
     if mouse[0]:
         mpos = pygame.mouse.get_pos()
+        if is_menu_acitve and quit.get_rect(topleft=(780,0)).collidepoint(mpos):
+            is_menu_acitve = False
     mouse = pygame.mouse.get_pressed()
     if mouse[0]:
         npos = pygame.mouse.get_pos()
