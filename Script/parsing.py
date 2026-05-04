@@ -66,6 +66,7 @@ class Fly_in(pd.BaseModel):
             x = xh if x < xh else x
             y = yh if y < yh else y
         self.size = (x + 1, y + 1)
+        self.hubs = sorted(self.hubs, key=lambda x: x.position[0])
         return self
 
     def reset(self):

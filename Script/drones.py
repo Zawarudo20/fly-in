@@ -92,9 +92,9 @@ drone = Drone(start)
 clock = pygame.time.Clock()
 next_hub = drone.get_next_hub()
 dis = distance((drone.x, drone.y), (next_hub.position[0], next_hub.position[1]))
+font = pygame.font.Font(None, 20)
 
-
-SPACE = 1
+SPACE = 2
 while True:
     display.fill(rgb("orange"))
     xs, ys = img.get_size()
@@ -104,19 +104,23 @@ while True:
             display.blit(img, draw_pos((w, h)))
     for hub in data.hubs:
         x, y = hub.position
-        x, y = draw_pos((x * SPACE + 1, y * SPACE + 1))
+        x, y = draw_pos((x * SPACE, y * SPACE))
         image = pygame.image.load("assets/Ground/box.png")
         box = pygame.transform.scale(image, (xs + 1, ys + 1))
-        rect = box.get_rect(center=(x * SPACE + 1, y * SPACE + 1))
         xm, xy = pygame.mouse.get_pos()
-        if rect.collidepoint(xm, xy):
-            print(hub.name)
         display.blit(box, (x, y - (ys / 4)))
         for net in hub.connections:
             xh, yh = net["HUB"].position
-            xh, yh = draw_pos((xh * SPACE + 1, yh * SPACE + 1))
+            xh, yh = draw_pos((xh * SPACE, yh * SPACE))
             pygame.draw.line(display, rgb("cyan"), (x + (ys / 2), y + (ys / 4)), (xh + (ys / 2), yh + (ys / 4)))
-    xd, yd = draw_pos((drone.x * SPACE + 1, drone.y * SPACE + 1))
+        rect = box.get_rect(topleft=(x, y))
+        if rect.collidepoint(xm, xy):
+            text = font.render(hub.name, True, rgb("black"))
+            display.blit(text, (x + xs / 4, y - ys / 2))
+            mouse = pygame.mouse.get_just_pressed()
+            if mouse[0]:
+                print(f"name : {hub.name}\npos : {hub.position}\ncolor : {hub.color}\ntype : {hub.zone}")
+    xd, yd = draw_pos((drone.x * SPACE, drone.y * SPACE))
     xn = next_hub.position[0]
     yn = next_hub.position[1]
     display.blit(dr, (xd, yd - ys / 2))
