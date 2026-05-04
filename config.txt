@@ -1,0 +1,72 @@
+nb_drOnes: 25 120
+
+starT_hub: base 0 0 [color=white]
+end_hub: target 20 15 [color=cyan]
+
+hub: alpha 2 3 [zone=normal color=green]
+hub: beta 4 6 [zone=restricted color=red]
+hub: gamma 6 2 [zone=priority color=blue max_drones=3]
+hub: delta 8 4 [zone=normal color=black]
+hub: epsilon 10 7 [zone=priority color=yellow max_drones=2]
+hub: zeta 12 3 [zone=restricted color=red]
+hub: eta 14 6 [zone=normal color=green]
+hub: theta 16 4 [zone=priority color=blue max_drones=1]
+hub: iota 18 8 [zone=normal color=black]
+hub: kappa 5 10 [zone=restricted color=red]
+hub: lambda 7 12 [zone=normal color=green]
+hub: mu 9 11 [zone=priority color=yellow max_drones=2]
+hub: nu 11 13 [zone=normal color=black]
+hub: xi 13 10 [zone=restricted color=red]
+hub: omicron 15 12 [zone=priority color=blue max_drones=1]
+hub: pi 17 14 [zone=normal color=green]
+hub: rho 19 11 [zone=normal color=black]
+hub: sigma 3 14 [zone=priority color=yellow max_drones=2]
+hub: tau 6 15 [zone=normal color=green]
+hub: upsilon 10 14 [zone=restricted color=red]
+hub: phi 12 15 [zone=normal color=black]
+hub: chi 14 14 [zone=priority color=blue max_drones=1]
+hub: psi 16 13 [zone=normal color=green]
+hub: omega 18 15 [zone=restricted color=red]
+
+coNNection: base-alpha
+connection: base-beta
+connection: alpha-gamma
+connection: beta-delta
+connection: gamma-delta
+connection: gamma-epsilon [max_link_capacity=2]
+connection: delta-zeta
+connection: epsilon-eta
+connection: zeta-theta [max_link_capacity=1]
+connection: eta-theta
+connection: theta-iota
+connection: iota-target
+
+connection: alpha-kappa
+connection: kappa-lambda
+connection: lambda-mu [max_link_capacity=2]
+connection: mu-nu
+connection: nu-xi
+connection: xi-omicron [max_link_capacity=1]
+connection: omicron-pi
+connection: pi-rho
+connection: rho-target
+
+connection: beta-sigma
+connection: sigma-tau
+connection: tau-upsilon
+connection: upsilon-phi
+connection: phi-chi [max_link_capacity=2]
+connection: chi-psi
+connection: psi-omega
+connection: omega-target
+
+connection: epsilon-mu
+connection: eta-nu
+connection: theta-xi
+connection: iota-omicron
+connection: rho-chi
+connection: lambda-upsilon
+connection: delta-sigma
+connection: zeta-phi
+connection: gamma-kappa
+connection: tau-target [max_link_capacity=1]
