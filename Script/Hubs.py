@@ -1,8 +1,17 @@
 import webcolors
 import pydantic as pd
+from Image import Image
+import pygame
 
+pygame.init()
+def draw_text(text: str, size, color) -> pygame.Font:
+    font = pygame.font.Font("assets/font/Minecraft.ttf", size)
+    text = font.render(text, True, webcolors.name_to_rgb(color))
+    return text
 
 class Hub(pd.BaseModel):
+    model_config = {"arbitrary_types_allowed": True}
+
     name: str = pd.Field(min_length=1)
     position: tuple[int, int]
     color: str = pd.Field(min_length=1)
@@ -11,6 +20,8 @@ class Hub(pd.BaseModel):
     connections: list[dict] = []
     visited: bool = False
     visitors: int = 0
+    image: Image = pd.Field(default_factory=lambda: Image("box", "assets/box/", 6, False))
+    menu: pygame.Surface = pd.Field(default_factory=lambda: pygame.image.load("assets/menu/card.png"))
 
     @pd.model_validator(mode="after")
     def Validation(self) -> object:
@@ -33,6 +44,17 @@ class Hub(pd.BaseModel):
                 raise ValueError("Line size can't be negative")
         return self
 
+    def update_menu(self):
+        menu = pygame.image.load("assets/menu/card.png")
+        name = draw_text(f"{self.name}", 20, "yellow")
+        menu.blit(name, (6 + (187 - name.size[0]) // 2, 25 + (43 - name.size[1]) // 2))
+        menu.blit(draw_text(f"{self.position[0]} , {self.position[1]}", 20, "yellow"), (10, 269))
+        menu.blit(draw_text(f"{self.zone}", 20, "yellow"), (110, 269))
+        menu.blit(draw_text(f"{self.color}", 20, self.color), (110, 219))
+        menu.blit(draw_text(f"{self.size}", 20, "yellow"), (10, 219))
+        box = pygame.transform.scale(pygame.image.load(self.image.get_current_frame()), (125, 125))
+        menu.blit(box, (40, 75))
+        self.menu.blit(menu, (0, 0))
 
 class Map(pd.BaseModel):
     drones: int = pd.Field(ge=1)

@@ -1,5 +1,6 @@
 from Hubs import Hub
 from copy import deepcopy
+from pygame import time
 from Image import Image
 import math
 
@@ -14,7 +15,7 @@ class Drone:
         self.path = self.bfs()
         self.next_hub: Hub = self.path[1]
         self.dis = self.__distance(self.current_hub.position, self.next_hub.position)
-        self.image = Image("Drone", "assets/Drone/", 7)
+        self.image = Image("Drone", "assets/Drone/", 7, True)
 
     @staticmethod
     def __distance(vector_1: tuple[int, int], vector_2: tuple[int, int]) -> float:
@@ -31,8 +32,9 @@ class Drone:
     def go_step(self) -> float:
         x = self.x
         y = self.y
-        self.x += math.cos(self.angle)
-        self.y += math.sin(self.angle)
+        dt = time.Clock().tick(60)
+        self.x += math.cos(self.angle) * 0.5
+        self.y += math.sin(self.angle) * 0.5
         return self.__distance((x, y), (self.x, self.y))
 
     def set_current_hub(self) -> None:
