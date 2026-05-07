@@ -1,6 +1,7 @@
 from webcolors import name_to_rgb as rgb
 from Drones import Drone
 from Hubs import Map, Hub
+from Animation import Movement
 import sys
 import pygame
 
@@ -14,6 +15,7 @@ class Visualizor:
         self.display = pygame.Surface((1200, 700), pygame.SRCALPHA)
         self.menu = pygame.Surface((1200, 300), pygame.SRCALPHA)
         self.menus = []
+        self.animations = {"menu": Movement((0, 400), (0, 400), 6)}
         self.map = data
         self.drone = Drone(data.start_hub, data.end_hub)
         self.size = 32
@@ -39,27 +41,54 @@ class Visualizor:
         return text
 
 # -----------------------drawing the menu-------------------------
-    def __draw_menu(self, name: str, pos: tuple[int, int],
-                    zone: str, color: str, size: int, img) -> None:
-        menu = pygame.image.load("assets/menu/card.png")
-        name = self.__draw_text(f"{name}", 20, "yellow")
-        menu.blit(name, (6 + (187 - name.size[0]) // 2, 6 + (43 - name.size[1]) // 2))
-        menu.blit(self.__draw_text(f"{pos[0]} , {pos[1]}", 20, "yellow"), (10, 250))
-        menu.blit(self.__draw_text(f"{zone}", 20, "yellow"), (110, 250))
-        menu.blit(self.__draw_text(f"{color}", 20, color), (110, 200))
-        menu.blit(self.__draw_text(f"{size}", 20, "yellow"), (10, 200))
-        box = pygame.transform.scale(img, (125, 125))
-        menu.blit(box, (40, 56))
-        self.menu.blit(menu, (self.menus * 200, 0))
+    def __draw_menu(self) -> None:
+        self.menu.fill((0,0,0,0))
+        if self.menus:
+            mx, my = pygame.mouse.get_pos()
+            y = self.animations["menu"].start[1]
+            if y <= 400:
+                box = pygame.image.load("assets/menu/down.png")
+            elif y >= 600:
+                box = pygame.image.load("assets/menu/up.png")
+            mouse = pygame.mouse.get_just_pressed()
+            remove = []
+            for i in range(len(self.menus)):
+                rect = pygame.Rect(200 * i + 74, y, 53, 19)
+                self.menu.blit(self.menus[i], (i * 200, 0))
+                if rect.collidepoint(mx, my) and mouse[0]:
+                    remove.append(i)
+            if not self.animations["menu"].is_animating():
+                if box.get_rect(topleft=(0,y)).collidepoint(mx, my) and mouse[0]:
+                    if y <= 400:
+                        self.animations["menu"].start = (0, 400)
+                        self.animations["menu"].end = (0, 600)
+                    elif y >= 600:
+                        self.animations["menu"].start = (0, 600)
+                        self.animations["menu"].end = (0, 400)
+                    self.animations["menu"].update_distance()
+                self.menu.blit(box, (0,0))
+            if remove:
+                self.menus.pop(remove[0])
+            self.display.blit(self.menu, (0,y))
+            y = self.animations["menu"].anim()
 
 # -----------------------drawing grid-------------------------
-    def __draw_grid(self) -> None:
+    def __draw_grid(self, ground, water) -> None:
         width, height = self.map.size
-        ground = pygame.image.load("assets/Ground/ground.png")
         ground = pygame.transform.scale(ground, (self.size, self.size))
-        for h in range(height * SPACE):
-            for w in range(width * SPACE):
-                self.display.blit(ground, self.__draw_pos((w, h)))
+        water = pygame.transform.scale(water, (self.size, self.size))
+        for h in range(-width, height * SPACE + width):
+            for w in range(-height, width * SPACE + height):
+                pos = self.__draw_pos((w, h))
+                if pos[0] > 1200 or pos[1] > 700:
+                    break
+                if 0 <= w < width * SPACE and 0 <= h < height * SPACE:
+                    self.display.blit(ground, pos)
+                else:
+                    self.display.blit(water, pos)
+            if pos[0] > 1200 and pos[1] > 700:
+                break
+
 
 # -----------------------drawing hub-------------------------
     def __draw_hub(self, hub: Hub, has_drone_arrived: bool) -> None:
@@ -95,17 +124,11 @@ class Visualizor:
         drone = pygame.image.load(self.drone.image.get_image())
         drone = pygame.transform.scale(drone, (self.size, self.size))
         x, y = self.__draw_pos((self.drone.x * SPACE, self.drone.y * SPACE))
-        nx, ny = self.drone.next_hub.position
         self.display.blit(drone, (x, y - self.size / 2))
-        if (
-            self.drone.dis > 0
-            and self.drone.current_hub.name != self.drone.goal.name
-           ):
-            self.drone.set_angle((nx, ny))
-            self.drone.dis -= self.drone.go_step()
-            return False
-        elif self.drone.current_hub.name != self.drone.goal.name:
-            return True
+        if self.drone.movement.is_animating():
+            self.drone.move()
+        elif len(self.drone.path) > 2:
+            self.drone.update()
 
     def __check_buttons(self) -> None:
         key = pygame.key.get_pressed()
@@ -115,11 +138,7 @@ class Visualizor:
             self.size -= 1
         if key[pygame.K_SPACE]:
             self.map.reset()
-            self.drone.x = self.map.start_hub.position[0]
-            self.drone.y = self.map.start_hub.position[1]
-            self.drone.current_hub = self.map.start_hub
-            self.drone.path = self.drone.bfs()
-            self.drone.set_next_hub()
+            self.drone.reset(self.map.start_hub)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -138,9 +157,11 @@ class Visualizor:
     def game(self) -> None:
         has_arrived = False
         can_go = False
+        ground = pygame.image.load("assets/Ground/ground.png")
+        water = pygame.image.load("assets/Ground/water.png")
         while True:
             self.display.fill(rgb("orange"))
-            self.__draw_grid()
+            self.__draw_grid(ground, water)
             key = pygame.key.get_pressed()
             if key[pygame.K_e]:
                 can_go = True
@@ -150,21 +171,10 @@ class Visualizor:
                 has_arrived = False
             for hub in self.map.hubs:
                 self.__draw_hub(hub, has_arrived)
-            if not has_arrived and can_go:
+            if can_go:
                 has_arrived = self.__draw_drone()
                 self.open_box = False
-            self.menu.fill((0,0,0,0))
-            mx, my = pygame.mouse.get_pos()
-            mouse = pygame.mouse.get_just_pressed()
-            remove = []
-            for i in range(len(self.menus)):
-                rect = pygame.Rect(200 * i + 74, 400, 53, 19)
-                self.menu.blit(self.menus[i], (i * 200, 0))
-                if rect.collidepoint(mx, my) and mouse[0]:
-                    remove.append(i)
-            if remove:
-                self.menus.pop(remove[0])
-            self.display.blit(self.menu, (0,400))
+            self.__draw_menu()
             self.__check_buttons()
             self.screen.blit(self.display, (0, 0))
             self.clock.tick(120)
