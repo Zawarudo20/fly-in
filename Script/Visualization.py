@@ -15,11 +15,11 @@ class Visualizor:
         self.display = pygame.Surface((1200, 700), pygame.SRCALPHA)
         self.menu = pygame.Surface((1200, 300), pygame.SRCALPHA)
         self.menus = []
-        self.animations = {"menu": Movement((0, 400), (0, 400), 6)}
+        self.animations = {"menu": Movement((0, 400), (0, 400), 20)}
         self.map = data
         self.drone = Drone(data.start_hub, data.end_hub)
         self.size = 32
-        self.camera = [0, 0]
+        self.camera = [(1200 - self.map.size[0]) / 2, 50]
         self.camera_pos = (0, 0)
         self.clock = pygame.time.Clock()
         self.isdragging = False
@@ -77,17 +77,17 @@ class Visualizor:
         width, height = self.map.size
         ground = pygame.transform.scale(ground, (self.size, self.size))
         water = pygame.transform.scale(water, (self.size, self.size))
-        for h in range(-width, height * SPACE + width):
-            for w in range(-height, width * SPACE + height):
+        for h in range(-width * SPACE, height * SPACE + width * SPACE):
+            for w in range(-height* SPACE, width * SPACE + height * SPACE):
                 pos = self.__draw_pos((w, h))
+                if pos[0] < -50  or pos[1] < -50:
+                    continue
                 if pos[0] > 1200 or pos[1] > 700:
                     break
                 if 0 <= w < width * SPACE and 0 <= h < height * SPACE:
                     self.display.blit(ground, pos)
                 else:
                     self.display.blit(water, pos)
-            if pos[0] > 1200 and pos[1] > 700:
-                break
 
 
 # -----------------------drawing hub-------------------------
@@ -132,6 +132,7 @@ class Visualizor:
 
     def __check_buttons(self) -> None:
         key = pygame.key.get_pressed()
+        x, y = self.map.size
         if key[pygame.K_1]:
             self.size += 1
         elif key[pygame.K_2] and self.size > 0:
@@ -149,8 +150,12 @@ class Visualizor:
             elif event.type == pygame.MOUSEBUTTONUP:
                 self.isdragging = False
             if event.type == pygame.MOUSEMOTION and self.isdragging:
-                self.camera[0] += event.pos[0] - self.camera_pos[0]
-                self.camera[1] += event.pos[1] - self.camera_pos[1]
+                xc = event.pos[0] - self.camera_pos[0]
+                yc = event.pos[1] - self.camera_pos[1]
+                if (self.camera[0] + xc + (-5 + -y) * self.size) < 0 and (self.camera[0] + xc + (x + 5) * self.size) > 1200:
+                    self.camera[0] += xc
+                if (self.camera[1] + yc + -5 * (self.size / 2)) < 0 and (self.camera[1] + yc + (y + 5) * (self.size)) > 700:
+                    self.camera[1] += yc
                 self.camera_pos = event.pos
 
 
@@ -160,7 +165,7 @@ class Visualizor:
         ground = pygame.image.load("assets/Ground/ground.png")
         water = pygame.image.load("assets/Ground/water.png")
         while True:
-            self.display.fill(rgb("orange"))
+            self.display.fill(rgb("black"))
             self.__draw_grid(ground, water)
             key = pygame.key.get_pressed()
             if key[pygame.K_e]:
