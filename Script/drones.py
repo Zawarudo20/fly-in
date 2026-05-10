@@ -1,7 +1,6 @@
 from Hubs import Hub
 from copy import deepcopy
-from Image import Image
-from Animation import Movement
+from Animation import Movement, Animation
 import math
 
 class Drone:
@@ -12,7 +11,7 @@ class Drone:
         self.y = start.position[1]
         self.path = self.bfs()
         self.next_hub: Hub = self.path[1]
-        self.image = Image("Drone", "assets/Drone/", 7, True)
+        self.image = Animation("Drone", "assets/Drone/", 0, 8, 3, 8)
         self.movement = Movement((self.x, self.y), (self.next_hub.position[0], self.next_hub.position[1]), 0.5)
 
     def move(self):
@@ -46,7 +45,7 @@ class Drone:
                 for net in last_hub.connections:
                     next = net["HUB"]
                     if not next.visited:
-                        new_path = deepcopy(path)
+                        new_path = path.copy()
                         next.visited = True
                         new_path.append(next)
                         new_paths.append(new_path)

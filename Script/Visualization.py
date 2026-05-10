@@ -19,7 +19,7 @@ class Visualizor:
         self.map = data
         self.drone = Drone(data.start_hub, data.end_hub)
         self.size = 32
-        self.camera = [(1200 - self.map.size[0]) / 2, 50]
+        self.camera = [600, 60]
         self.camera_pos = (0, 0)
         self.clock = pygame.time.Clock()
         self.isdragging = False
@@ -40,6 +40,22 @@ class Visualizor:
         text = font.render(text, True, rgb(color))
         return text
 
+# -----------------------drawing grid-------------------------
+    def __draw_grid(self, ground, water) -> None:
+        width, height = self.map.size
+        ground = pygame.transform.scale(ground, (self.size, self.size))
+        water = pygame.transform.scale(water, (self.size, self.size))
+        for h in range(-width * SPACE, height * SPACE + width * SPACE):
+            for w in range(-height* SPACE, width * SPACE + height * SPACE):
+                pos = self.__draw_pos((w, h))
+                if pos[0] < -self.size  or pos[1] < -self.size:
+                    continue
+                if pos[0] > 1200 or pos[1] > 700:
+                    break
+                if 0 <= w < width * SPACE and 0 <= h < height * SPACE:
+                    self.display.blit(ground, pos)
+                else:
+                    self.display.blit(water, pos)
 # -----------------------drawing the menu-------------------------
     def __draw_menu(self) -> None:
         self.menu.fill((0,0,0,0))
@@ -72,22 +88,6 @@ class Visualizor:
             self.display.blit(self.menu, (0,y))
             y = self.animations["menu"].anim()
 
-# -----------------------drawing grid-------------------------
-    def __draw_grid(self, ground, water) -> None:
-        width, height = self.map.size
-        ground = pygame.transform.scale(ground, (self.size, self.size))
-        water = pygame.transform.scale(water, (self.size, self.size))
-        for h in range(-width * SPACE, height * SPACE + width * SPACE):
-            for w in range(-height* SPACE, width * SPACE + height * SPACE):
-                pos = self.__draw_pos((w, h))
-                if pos[0] < -50  or pos[1] < -50:
-                    continue
-                if pos[0] > 1200 or pos[1] > 700:
-                    break
-                if 0 <= w < width * SPACE and 0 <= h < height * SPACE:
-                    self.display.blit(ground, pos)
-                else:
-                    self.display.blit(water, pos)
 
 
 # -----------------------drawing hub-------------------------
@@ -95,10 +95,7 @@ class Visualizor:
 # --------------------------DRAW BOX-----------------------------
         x, y = hub.position
         x, y = self.__draw_pos((x * SPACE, y * SPACE))
-        if has_drone_arrived and hub.name == self.drone.next_hub.name and not self.open_box:
-            box = pygame.image.load(hub.image.get_image())
-        else:
-            box = pygame.image.load(hub.image.get_reverse())
+        box = hub.image.anim()
         box = pygame.transform.scale(box, (self.size, self.size))
         self.display.blit(box, (x, y - self.size / 4))
         for net in hub.connections:
@@ -121,21 +118,24 @@ class Visualizor:
                     self.menus.append(hub.menu)
 # -----------------------drawing drone---------------------------
     def __draw_drone(self) -> None:
-        drone = pygame.image.load(self.drone.image.get_image())
+        drone = self.drone.image.anim()
         drone = pygame.transform.scale(drone, (self.size, self.size))
+        if self.drone.image.start == 8:
+            self.drone.image.start = 0
         x, y = self.__draw_pos((self.drone.x * SPACE, self.drone.y * SPACE))
         self.display.blit(drone, (x, y - self.size / 2))
         if self.drone.movement.is_animating():
             self.drone.move()
-        elif len(self.drone.path) > 2:
-            self.drone.update()
+        else:
+            return True
+        return False
 
     def __check_buttons(self) -> None:
         key = pygame.key.get_pressed()
         x, y = self.map.size
         if key[pygame.K_1]:
             self.size += 1
-        elif key[pygame.K_2] and self.size > 0:
+        elif key[pygame.K_2] and self.size > 28:
             self.size -= 1
         if key[pygame.K_SPACE]:
             self.map.reset()
@@ -152,12 +152,19 @@ class Visualizor:
             if event.type == pygame.MOUSEMOTION and self.isdragging:
                 xc = event.pos[0] - self.camera_pos[0]
                 yc = event.pos[1] - self.camera_pos[1]
-                if (self.camera[0] + xc + (-5 + -y) * self.size) < 0 and (self.camera[0] + xc + (x + 5) * self.size) > 1200:
+                if (y + 5) * SPACE * (self.size / 2) > self.camera[0] + xc > 1200 - (x + 5) * SPACE * (self.size / 2):
                     self.camera[0] += xc
-                if (self.camera[1] + yc + -5 * (self.size / 2)) < 0 and (self.camera[1] + yc + (y + 5) * (self.size)) > 700:
+                if (10 * SPACE) * (self.size / 4) > self.camera[1] + yc > 700 - (x + y + 10) * SPACE * (self.size / 4):
                     self.camera[1] += yc
                 self.camera_pos = event.pos
-
+        if (y + 5) * SPACE * (self.size / 2) < self.camera[0]:
+            self.camera[0] = (y + 5) * SPACE * (self.size / 2)
+        if 1200 - (x + 5) * SPACE * (self.size / 2) > self.camera[0]:
+            self.camera[0] = 1200 - (x + 5) * SPACE * (self.size / 2)
+        if (10 * SPACE) * (self.size / 4) < self.camera[1]:
+            self.camera[1] = (10 * SPACE) * (self.size / 4)
+        if 700 - (x + y + 10) * SPACE * (self.size / 4) > self.camera[1]:
+            self.camera[1] = 700 - (x + y + 10) * SPACE * (self.size / 4)
 
     def game(self) -> None:
         has_arrived = False
@@ -176,9 +183,15 @@ class Visualizor:
                 has_arrived = False
             for hub in self.map.hubs:
                 self.__draw_hub(hub, has_arrived)
-            if can_go:
+            if can_go and not has_arrived and not self.drone.current_hub.image.is_animating():
                 has_arrived = self.__draw_drone()
                 self.open_box = False
+            if has_arrived:
+                self.drone.next_hub.image.end = 6
+                if not self.drone.next_hub.image.is_animating() and len(self.drone.path) > 2:
+                    has_arrived = False
+                    self.drone.next_hub.image.end = 0
+                    self.drone.update()
             self.__draw_menu()
             self.__check_buttons()
             self.screen.blit(self.display, (0, 0))

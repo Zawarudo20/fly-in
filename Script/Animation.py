@@ -1,4 +1,5 @@
 import math
+import pygame
 
 class Movement:
     def __init__(self, start, end, speed) -> None:
@@ -30,5 +31,34 @@ class Movement:
 
     def is_animating(self):
         if self.distance > 0:
+            return True
+        return False
+
+class Animation:
+    def __init__(self, name, path, start, end, delay, frames) -> None:
+        self.name = name
+        self.path = path
+        self.start = start
+        self.end = end
+        self.timer = delay
+        self.time = 0
+        self.frames = []
+        for i in range(frames):
+            frame = pygame.image.load(f"{path}{name}{i}.png")
+            self.frames.append(frame)
+
+    def anim(self):
+        frame = self.frames[self.start]
+        if self.start != self.end and self.time >= self.timer:
+            if self.start < self.end:
+                self.start += 1
+            else:
+                self.start -= 1
+            self.time = 0
+        if self.time < self.timer:
+            self.time += 1
+        return frame
+    def is_animating(self):
+        if self.start != self.end:
             return True
         return False

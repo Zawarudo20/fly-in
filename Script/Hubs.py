@@ -1,7 +1,7 @@
 import webcolors
 import pydantic as pd
-from Image import Image
 import pygame
+from Animation import Animation
 
 pygame.init()
 def draw_text(text: str, size, color) -> pygame.Font:
@@ -20,7 +20,7 @@ class Hub(pd.BaseModel):
     connections: list[dict] = []
     visited: bool = False
     visitors: int = 0
-    image: Image = pd.Field(default_factory=lambda: Image("box", "assets/box/", 6, False))
+    image: Animation = pd.Field(default_factory=lambda: Animation("box", "assets/box/", 0, 0, 2, 7))
     menu: pygame.Surface = pd.Field(default_factory=lambda: pygame.image.load("assets/menu/card.png"))
 
     @pd.model_validator(mode="after")
@@ -52,7 +52,7 @@ class Hub(pd.BaseModel):
         menu.blit(draw_text(f"{self.zone}", 20, "yellow"), (110, 269))
         menu.blit(draw_text(f"{self.color}", 20, self.color), (110, 219))
         menu.blit(draw_text(f"{self.size}", 20, "yellow"), (10, 219))
-        box = pygame.transform.scale(pygame.image.load(self.image.get_current_frame()), (125, 125))
+        box = pygame.transform.scale(self.image.anim(), (125, 125))
         menu.blit(box, (40, 75))
         self.menu.blit(menu, (0, 0))
 
