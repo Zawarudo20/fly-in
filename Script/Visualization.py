@@ -3,10 +3,11 @@ from Drones import Drone
 from Hubs import Map, Hub
 from Animation import Movement
 import sys
+from time import sleep
 import pygame
 
 
-SPACE = 2
+SPACE = 5
 class Visualizor:
     def __init__(self, data: Map) -> None:
         pygame.init()
@@ -17,13 +18,18 @@ class Visualizor:
         self.menus = []
         self.animations = {"menu": Movement((0, 400), (0, 400), 20)}
         self.map = data
-        self.drone = Drone(data.start_hub, data.end_hub)
+        self.drones: list[Drone] = []
+        for i in range(data.drones):
+            drone = Drone(f"D{i}", data.start_hub, data.end_hub)
+            self.map.start_hub.visitors.add(drone)
+            drone.path_finder()
+            data.reset()
+            self.drones.append(drone)
         self.size = 32
         self.camera = [600, 60]
         self.camera_pos = (0, 0)
         self.clock = pygame.time.Clock()
         self.isdragging = False
-        self.open_box = False
 
 
 # ---------------------Get position for drawing-------------------
@@ -91,11 +97,11 @@ class Visualizor:
 
 
 # -----------------------drawing hub-------------------------
-    def __draw_hub(self, hub: Hub, has_drone_arrived: bool) -> None:
+    def __draw_hub(self, hub: Hub) -> None:
 # --------------------------DRAW BOX-----------------------------
         x, y = hub.position
         x, y = self.__draw_pos((x * SPACE, y * SPACE))
-        box = hub.image.anim()
+        box = hub.image
         box = pygame.transform.scale(box, (self.size, self.size))
         self.display.blit(box, (x, y - self.size / 4))
         for net in hub.connections:
@@ -117,18 +123,17 @@ class Visualizor:
                     hub.update_menu()
                     self.menus.append(hub.menu)
 # -----------------------drawing drone---------------------------
-    def __draw_drone(self) -> None:
-        drone = self.drone.image.anim()
-        drone = pygame.transform.scale(drone, (self.size, self.size))
-        if self.drone.image.start == 8:
-            self.drone.image.start = 0
-        x, y = self.__draw_pos((self.drone.x * SPACE, self.drone.y * SPACE))
-        self.display.blit(drone, (x, y - self.size / 2))
-        if self.drone.movement.is_animating():
-            self.drone.move()
-        else:
-            return True
-        return False
+    def __draw_drone(self, drone: Drone, pause) -> None:
+        image = drone.image.anim()
+        image = pygame.transform.scale(image, (self.size, self.size))
+        if drone.image.start == 8:
+            drone.image.start = 0
+        x, y = self.__draw_pos((drone.x * SPACE, drone.y * SPACE))
+        self.display.blit(image, (x, y - self.size / 2))
+        if drone.movement.is_animating() and not pause:
+            drone.move()
+        elif not drone.movement.is_animating():
+            drone.has_arrived = True
 
     def __check_buttons(self) -> None:
         key = pygame.key.get_pressed()
@@ -138,8 +143,14 @@ class Visualizor:
         elif key[pygame.K_2] and self.size > 28:
             self.size -= 1
         if key[pygame.K_SPACE]:
-            self.map.reset()
-            self.drone.reset(self.map.start_hub)
+            for drone in self.drones:
+                drone.x, drone.y = self.map.start_hub.position
+                drone.current_hub = self.map.start_hub
+                drone.path_finder()
+                self.map.reset()
+                drone.has_arrived = False
+            for hub in drone.path:
+                print(hub.name)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -167,31 +178,42 @@ class Visualizor:
             self.camera[1] = 700 - (x + y + 10) * SPACE * (self.size / 4)
 
     def game(self) -> None:
-        has_arrived = False
-        can_go = False
         ground = pygame.image.load("assets/Ground/ground.png")
         water = pygame.image.load("assets/Ground/water.png")
+        can_go = False
+        pause = False
+        count = 0
         while True:
-            self.display.fill(rgb("black"))
+            self.display.fill(rgb("white"))
             self.__draw_grid(ground, water)
             key = pygame.key.get_pressed()
             if key[pygame.K_e]:
                 can_go = True
             if key[pygame.K_a]:
-                can_go = False
-            if key[pygame.K_SPACE]:
-                has_arrived = False
+                pause = not pause
             for hub in self.map.hubs:
-                self.__draw_hub(hub, has_arrived)
-            if can_go and not has_arrived and not self.drone.current_hub.image.is_animating():
-                has_arrived = self.__draw_drone()
-                self.open_box = False
-            if has_arrived:
-                self.drone.next_hub.image.end = 6
-                if not self.drone.next_hub.image.is_animating() and len(self.drone.path) > 2:
-                    has_arrived = False
-                    self.drone.next_hub.image.end = 0
-                    self.drone.update()
+                self.__draw_hub(hub)
+            all_arrived = True
+            all_in_goal = True
+            if can_go:
+                for drone in self.drones:
+                    self.__draw_drone(drone, pause)
+                    if not drone.has_arrived:
+                        all_arrived = False
+            if can_go and all_arrived:
+                for drone in self.drones:
+                    if drone.current_hub.name != drone.next_hub.name:
+                        print(f"{drone.name}-{drone.next_hub.name}", end=" ")
+                    drone.update()
+                    self.map.reset()
+                    drone.has_arrived = False
+                    if drone.current_hub.name != self.map.end_hub.name:
+                        all_in_goal = False
+                print("")
+                if not all_in_goal:
+                    count += 1
+            text = self.__draw_text(f"count: {count}", 30, "black")
+            self.display.blit(text, (0,0))
             self.__draw_menu()
             self.__check_buttons()
             self.screen.blit(self.display, (0, 0))

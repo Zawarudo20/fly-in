@@ -1,13 +1,13 @@
 import webcolors
 import pydantic as pd
 import pygame
-from Animation import Animation
 
 pygame.init()
 def draw_text(text: str, size, color) -> pygame.Font:
     font = pygame.font.Font("assets/font/Minecraft.ttf", size)
     text = font.render(text, True, webcolors.name_to_rgb(color))
     return text
+
 
 class Hub(pd.BaseModel):
     model_config = {"arbitrary_types_allowed": True}
@@ -18,17 +18,16 @@ class Hub(pd.BaseModel):
     size: int = pd.Field(ge=1)
     zone: str = pd.Field(min_length=1)
     connections: list[dict] = []
-    visited: bool = False
-    visitors: int = 0
-    image: Animation = pd.Field(default_factory=lambda: Animation("box", "assets/box/", 0, 0, 2, 7))
+    lines: set = set()
+    visitors: set = set()
+    g: int = 1
+    h: int = 0
+    path: "Hub | None" = None 
+    image: pygame.Surface = pd.Field(default_factory=lambda: pygame.image.load("assets/box/spot.png"))
     menu: pygame.Surface = pd.Field(default_factory=lambda: pygame.image.load("assets/menu/card.png"))
 
     @pd.model_validator(mode="after")
     def Validation(self) -> object:
-        x, y = self.position
-        if x < 0 or y < 0:
-            raise ValueError(f"{self.name} positions must be positive,"
-                             f" got {self.position}")
         colors = [color for color in webcolors.names("css3")]
         self.color = self.color.lower()
         if self.color not in colors:
@@ -42,6 +41,17 @@ class Hub(pd.BaseModel):
         for hub in self.connections:
             if hub["SIZE"] < 0:
                 raise ValueError("Line size can't be negative")
+        width, height = self.image.get_size()
+        for h in range(height):
+            for w in range(width):
+                color = self.image.get_at((w, h))
+                if color == webcolors.name_to_rgb("white"):
+                    self.image.set_at((w, h), webcolors.name_to_rgb(self.color))
+        for net in self.connections:
+            hub = net["HUB"]
+            line = Line(self, hub, net["SIZE"])
+            self.lines.add(line)
+            hub.lines.add(line)
         return self
 
     def update_menu(self):
@@ -52,9 +62,29 @@ class Hub(pd.BaseModel):
         menu.blit(draw_text(f"{self.zone}", 20, "yellow"), (110, 269))
         menu.blit(draw_text(f"{self.color}", 20, self.color), (110, 219))
         menu.blit(draw_text(f"{self.size}", 20, "yellow"), (10, 219))
-        box = pygame.transform.scale(self.image.anim(), (125, 125))
+        box = pygame.transform.scale(self.image, (125, 125))
         menu.blit(box, (40, 75))
         self.menu.blit(menu, (0, 0))
+
+    def is_free(self) -> bool:
+        if self.size != len(self.visitors):
+            return True
+        return False
+
+class Line:
+    def __init__(self, hub1: Hub, hub2: Hub, size: int) -> None:
+        self.name = f"{hub1.name}-{hub2.name}"
+        self.hubs = [hub1, hub2]
+        self.size = size
+        self.visitors = set()
+        xa, ya = hub1.position
+        xb, yb = hub2.position
+        self.position = ((xa + xb) / 2, (ya + yb) / 2)
+
+    def is_free(self) -> bool:
+        if self.size != len(self.visitors):
+            return True
+        return False
 
 class Map(pd.BaseModel):
     drones: int = pd.Field(ge=1)
@@ -91,7 +121,6 @@ class Map(pd.BaseModel):
 
     def reset(self) -> None:
         for hub in self.hubs:
-            hub.visited = False
-            hub.visitors = 0
-        self.start_hub.visited = False
-        self.end_hub.visited = False
+            hub.path = None
+            hub.g = 0
+            hub.h = 0
