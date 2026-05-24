@@ -48,17 +48,20 @@ class Visualizor:
 
 # -----------------------drawing grid-------------------------
     def __draw_grid(self, ground, water) -> None:
-        width, height = self.map.size
+        minw, minh = self.map.min_size
+        maxw, maxh = self.map.max_size
+        maxh += 1
+        maxw += 1
         ground = pygame.transform.scale(ground, (self.size, self.size))
         water = pygame.transform.scale(water, (self.size, self.size))
-        for h in range(-width * SPACE, height * SPACE + width * SPACE):
-            for w in range(-height* SPACE, width * SPACE + height * SPACE):
+        for h in range(minh * SPACE - 50, maxh * SPACE + 50):
+            for w in range(minw * SPACE - 50, maxw * SPACE + 50):
                 pos = self.__draw_pos((w, h))
                 if pos[0] < -self.size  or pos[1] < -self.size:
                     continue
                 if pos[0] > 1200 or pos[1] > 700:
                     break
-                if 0 <= w < width * SPACE and 0 <= h < height * SPACE:
+                if minw * SPACE <= w < maxw * SPACE and minh * SPACE <= h < maxh * SPACE:
                     self.display.blit(ground, pos)
                 else:
                     self.display.blit(water, pos)
@@ -137,7 +140,7 @@ class Visualizor:
 
     def __check_buttons(self) -> None:
         key = pygame.key.get_pressed()
-        x, y = self.map.size
+        x, y = self.map.max_size
         if key[pygame.K_1]:
             self.size += 1
         elif key[pygame.K_2] and self.size > 28:

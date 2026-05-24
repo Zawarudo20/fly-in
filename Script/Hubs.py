@@ -91,7 +91,8 @@ class Map(pd.BaseModel):
     start_hub: Hub
     end_hub: Hub
     hubs: list[Hub]
-    size: tuple[int, int] = (0, 0)
+    min_size: tuple[int, int] = (0, 0)
+    max_size: tuple[int, int] = (0, 0)
 
     @pd.model_validator(mode="after")
     def validation(self) -> object:
@@ -109,13 +110,16 @@ class Map(pd.BaseModel):
         set_pos = {hub.position for hub in self.hubs}
         if len(set_pos) != len(self.hubs):
             raise ValueError("two or more Hubs share the same cordinate")
-        x = 0
-        y = 0
+        xi, yi = self.start_hub.position
+        xa, ya = self.start_hub.position
         for hub in self.hubs:
             xh, yh = hub.position
-            x = xh if x < xh else x
-            y = yh if y < yh else y
-        self.size = (x + 1, y + 1)
+            xa = xh if xa < xh else xa
+            ya = yh if ya < yh else ya
+            xi = xh if xi > xh else xi
+            yi = yh if yi > yh else yi
+        self.min_size = (xi, yi)
+        self.max_size = (xa, ya)
         self.hubs = sorted(self.hubs, key=lambda x: x.position[0])
         return self
 
