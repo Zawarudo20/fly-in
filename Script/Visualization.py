@@ -17,6 +17,12 @@ class Visualizor:
         self.menu = pygame.Surface((1200, 300), pygame.SRCALPHA)
         self.menus = []
         self.animations = {"menu": Movement((0, 400), (0, 400), 20)}
+        self.buttons = {"pause": pygame.image.load("assets/menu/pause.png"),
+                        "resume": pygame.image.load("assets/menu/resume.png"),
+                        "reset": pygame.image.load("assets/menu/reset.png"),
+                        "zoom_in": pygame.image.load("assets/menu/zoom_in.png"),
+                        "zoom_out": pygame.image.load("assets/menu/zoom_out.png"),
+                        "zoom": pygame.image.load("assets/menu/zoom.png")}
         self.map = data
         self.drones: list[Drone] = []
         for i in range(data.drones):
@@ -139,21 +145,7 @@ class Visualizor:
             drone.has_arrived = True
 
     def __check_buttons(self) -> None:
-        key = pygame.key.get_pressed()
         x, y = self.map.max_size
-        if key[pygame.K_1]:
-            self.size += 1
-        elif key[pygame.K_2] and self.size > 28:
-            self.size -= 1
-        if key[pygame.K_SPACE]:
-            for drone in self.drones:
-                drone.x, drone.y = self.map.start_hub.position
-                drone.current_hub = self.map.start_hub
-                drone.path_finder()
-                self.map.reset()
-                drone.has_arrived = False
-            for hub in drone.path:
-                print(hub.name)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -180,30 +172,57 @@ class Visualizor:
         if 700 - (x + y + 10) * SPACE * (self.size / 4) > self.camera[1]:
             self.camera[1] = 700 - (x + y + 10) * SPACE * (self.size / 4)
 
+    def check_click(self):
+        key = pygame.mouse.get_just_pressed()
+        pos = pygame.mouse.get_pos()
+        buttons = {"pause": False, "reset": False}
+        if key[0]:
+            pause_rect = self.buttons["pause"].get_rect(topleft=(1168, 0))
+            reset_rect = self.buttons["reset"].get_rect(topleft=(1136, 0))
+            if pause_rect.collidepoint(pos):
+                buttons["pause"] = True
+            if reset_rect.collidepoint(pos):
+                buttons["reset"] = True
+        key = pygame.mouse.get_pressed()
+        if key[0]:
+            zoom_in_rect = self.buttons["reset"].get_rect(topleft=(1168, 304))
+            zoom_out_rect = self.buttons["reset"].get_rect(topleft=(1168, 368))
+            if zoom_in_rect.collidepoint(pos):
+                self.size += 1
+            elif zoom_out_rect.collidepoint(pos) and self.size > 28:
+                self.size -= 1
+        return buttons
+
+    def reset(self):
+        for hub in self.map.hubs:
+            hub.visitors = set()
+            for line in hub.lines:
+                line.visitors = set()
+        for drone in self.drones:
+            self.map.start_hub.visitors.add(drone)
+            drone.x, drone.y = self.map.start_hub.position
+            drone.current_hub = self.map.start_hub
+            drone.path_finder()
+            self.map.reset()
+            drone.has_arrived = False
+
     def game(self) -> None:
         ground = pygame.image.load("assets/Ground/ground.png")
         water = pygame.image.load("assets/Ground/water.png")
-        can_go = False
-        pause = False
+        pause = True
         count = 0
         while True:
             self.display.fill(rgb("white"))
             self.__draw_grid(ground, water)
-            key = pygame.key.get_pressed()
-            if key[pygame.K_e]:
-                can_go = True
-            if key[pygame.K_a]:
-                pause = not pause
             for hub in self.map.hubs:
                 self.__draw_hub(hub)
             all_arrived = True
             all_in_goal = True
-            if can_go:
-                for drone in self.drones:
-                    self.__draw_drone(drone, pause)
-                    if not drone.has_arrived:
-                        all_arrived = False
-            if can_go and all_arrived:
+            for drone in self.drones:
+                self.__draw_drone(drone, pause)
+                if not drone.has_arrived:
+                    all_arrived = False
+            if all_arrived and not pause:
                 for drone in self.drones:
                     if drone.current_hub.name != drone.next_hub.name:
                         print(f"{drone.name}-{drone.next_hub.name}", end=" ")
@@ -217,8 +236,22 @@ class Visualizor:
                     count += 1
             text = self.__draw_text(f"count: {count}", 30, "black")
             self.display.blit(text, (0,0))
+            if pause:
+                self.display.blit(self.buttons["resume"], (1168, 0))
+            else:
+                self.display.blit(self.buttons["pause"], (1168, 0))
+            self.display.blit(self.buttons["reset"], (1136, 0))
+            self.display.blit(self.buttons["zoom_in"], (1168, 304))
+            self.display.blit(self.buttons["zoom"], (1168, 336))
+            self.display.blit(self.buttons["zoom_out"], (1168, 368))
             self.__draw_menu()
             self.__check_buttons()
+            check_buttons = self.check_click()
+            if check_buttons["pause"]:
+                pause = not pause
+            if check_buttons["reset"]:
+                self.reset()
+                pause = True
             self.screen.blit(self.display, (0, 0))
             self.clock.tick(120)
             pygame.display.update()
