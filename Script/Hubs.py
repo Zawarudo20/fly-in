@@ -23,8 +23,8 @@ class Hub(pd.BaseModel):
     g: int = 1
     h: int = 0
     path: "Hub | None" = None 
-    image: pygame.Surface = pd.Field(default_factory=lambda: pygame.image.load("assets/box/spot.png"))
-    menu: pygame.Surface = pd.Field(default_factory=lambda: pygame.image.load("assets/menu/card.png"))
+    image: pygame.Surface | None = None
+    menu: pygame.Surface | None = None
 
     @pd.model_validator(mode="after")
     def Validation(self) -> object:
@@ -41,30 +41,39 @@ class Hub(pd.BaseModel):
         for hub in self.connections:
             if hub["SIZE"] < 0:
                 raise ValueError("Line size can't be negative")
-        width, height = self.image.get_size()
-        for h in range(height):
-            for w in range(width):
-                color = self.image.get_at((w, h))
-                if color == webcolors.name_to_rgb("white"):
-                    self.image.set_at((w, h), webcolors.name_to_rgb(self.color))
         for net in self.connections:
             hub = net["HUB"]
             line = Line(self, hub, net["SIZE"])
             self.lines.add(line)
             hub.lines.add(line)
+        self.image = pygame.image.load(f"assets/box/box_{self.zone}.png")
+        self.menu = pygame.image.load("assets/menu/card.png")
+        width, height = self.image.get_size()
+        for h in range(height):
+            for w in range(width):
+                color = self.image.get_at((w, h))
+                if color == (255, 255, 255):
+                    self.image.set_at((w, h), webcolors.name_to_rgb(self.color))
+        self.update_menu()
         return self
 
     def update_menu(self):
-        menu = pygame.image.load("assets/menu/card.png")
-        name = draw_text(f"{self.name}", 20, "yellow")
-        menu.blit(name, (6 + (187 - name.size[0]) // 2, 25 + (43 - name.size[1]) // 2))
-        menu.blit(draw_text(f"{self.position[0]} , {self.position[1]}", 20, "yellow"), (10, 269))
-        menu.blit(draw_text(f"{self.zone}", 20, "yellow"), (110, 269))
-        menu.blit(draw_text(f"{self.color}", 20, self.color), (110, 219))
-        menu.blit(draw_text(f"{self.size}", 20, "yellow"), (10, 219))
+        width, height = self.menu.get_size()
+        for h in range(height):
+            for w in range(width):
+                color = self.menu.get_at((w, h))
+                if color == (255, 0, 0):
+                    self.menu.set_at((w, h), webcolors.name_to_rgb(self.color))
+        name = draw_text(f"{self.name}", 15, "black")
+        self.menu.blit(name, (21 + (159 - name.size[0]) // 2 , 144 + (17 - name.size[1]) // 2))
+        self.menu.blit(draw_text(f"{self.position[0]}", 20, "red"), (40, 270))
+        self.menu.blit(draw_text(f"{self.position[1]}", 20, "green"), (70, 270))
+        zone = draw_text(f"{self.zone}", 20, "black")
+        self.menu.blit(zone, (25 + (149 - zone.size[0]) // 2, 186 + (88 - zone.size[1]) // 2))
+        size = draw_text(f"{self.size}", 15, "black")
+        self.menu.blit(size, (150 + (25 - size.size[0]) // 2, 23 + (18 - size.size[1]) // 2))
         box = pygame.transform.scale(self.image, (125, 125))
-        menu.blit(box, (40, 75))
-        self.menu.blit(menu, (0, 0))
+        self.menu.blit(box, (40, 8))
 
     def is_free(self) -> bool:
         if self.size != len(self.visitors):
