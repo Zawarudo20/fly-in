@@ -1,37 +1,43 @@
 from webcolors import name_to_rgb as rgb
-from Drones import Drone
-from Hubs import Map, Hub
-from Animation import Movement
+from Drones import Drone, map_solver
+from Hubs import Map
+from pygame_utils import Button, Movement, Sound
 import sys
-from time import sleep
 import pygame
 
 
 SPACE = 5
 class Visualizor:
-    def __init__(self, data: Map) -> None:
+    def __init__(self, data: Map, solver: map_solver) -> None:
         pygame.init()
         pygame.display.set_caption("fly_in")
         self.screen = pygame.display.set_mode((1200, 700))
         self.display = pygame.Surface((1200, 700), pygame.SRCALPHA)
-        self.menu = pygame.Surface((1200, 300), pygame.SRCALPHA)
-        self.menus = []
-        self.animations = {"menu": Movement((0, 400), (0, 400), 20)}
-        self.buttons = {"pause": pygame.image.load("assets/menu/pause.png"),
-                        "resume": pygame.image.load("assets/menu/resume.png"),
-                        "reset": pygame.image.load("assets/menu/reset.png"),
-                        "zoom_in": pygame.image.load("assets/menu/zoom_in.png"),
-                        "zoom_out": pygame.image.load("assets/menu/zoom_out.png"),
-                        "speed_up": pygame.image.load("assets/menu/speed_up.png"),
-                        "speed_down": pygame.image.load("assets/menu/speed_down.png")}
+        self.menu = {"display": pygame.Surface((1200, 300), pygame.SRCALPHA),
+                     "menus": [],
+                     "animation": Movement((0, 400), (0, 400), 20)}
+        self.buttons = {"pause": Button("assets/menu/pause.png", (1168, 0)),
+                        "resume": Button("assets/menu/resume.png", (1168, 0)),
+                        "reset": Button("assets/menu/reset.png", (1136, 0)),
+                        "zoom_in": Button("assets/menu/zoom_in.png", (1168, 32)),
+                        "zoom_out": Button("assets/menu/zoom_out.png", (1136,32)),
+                        "speed_up": Button("assets/menu/speed_up.png", (1168, 64)),
+                        "speed_down": Button("assets/menu/speed_down.png", (1136, 64)),
+                        "write": Button("assets/menu/write.png", (1104, 0)),
+                        "song": Button("assets/menu/song.png", (1072, 0)),
+                        "menu_down": Button("assets/menu/down.png", (0,368)),
+                        "menu_up": Button("assets/menu/up.png", (0,568)),
+                        "remove": Button("assets/menu/remove.png", (0, 0))}
+        self.sounds = {"song": Sound("assets/sounds/song.mp3"),
+                       "click": Sound("assets/sounds/click.mp3")}
         self.map = data
-        self.drones: list[Drone] = []
-        for i in range(data.drones):
-            drone = Drone(f"D{i}", data.start_hub, data.end_hub)
-            self.map.start_hub.visitors.add(drone)
-            drone.path_finder()
-            data.reset()
-            self.drones.append(drone)
+        self.solver = solver
+        solver.solve()
+        self.drones: list[Drone] = solver.drones
+        for drone in self.drones:
+            drone.current_hub = data.start_hub
+            drone.next_hub = drone.path[1]
+            drone.movement = Movement(drone.start.position, drone.next_hub.position, drone.speed)
         self.size = 32
         self.camera = [600, 60]
         self.camera_pos = (0, 0)
@@ -106,74 +112,88 @@ class Visualizor:
                 pos = self.__draw_pos((w + 1, h + 1))
                 self.display.blit(wxy, pos)
 
+    def __draw_buttons(self, pause):
+        if pause:
+            self.buttons["resume"].built(self.display)
+        else:
+            self.buttons["pause"].built(self.display)
+        self.buttons["reset"].built(self.display)
+        self.buttons["write"].built(self.display)
+        self.buttons["song"].built(self.display)
+        self.buttons["speed_up"].built(self.display) 
+        self.buttons["speed_down"].built(self.display) 
+        self.buttons["zoom_in"].built(self.display)
+        self.buttons["zoom_out"].built(self.display)
+
 # -----------------------drawing the menu-------------------------
-    def __draw_menu(self, x) -> None:
-        self.menu.fill((0,0,0,0))
-        if self.menus:
-            mx, my = pygame.mouse.get_pos()
-            y = self.animations["menu"].start[1]
-            if y <= 400:
-                box = pygame.image.load("assets/menu/down.png")
-            elif y >= 600:
-                box = pygame.image.load("assets/menu/up.png")
-            mouse = pygame.mouse.get_just_pressed()
+    def __draw_menu(self) -> None:
+        self.menu["display"].fill((0,0,0,0))
+        menus = self.menu["menus"]
+        animation = self.menu["animation"]
+        if menus:
+            y = animation.start[1]
             remove = []
-            for i in range(len(self.menus)):
+            for i in range(len(menus)):
                 pos = (200 * i + 168, y - 30)
-                rect = x.get_rect(topleft=pos)
-                self.menu.blit(self.menus[i], (i * 200, 0))
-                self.display.blit(x, pos)
-                if rect.collidepoint(mx, my) and mouse[0]:
+                self.buttons["remove"].change_pos(pos)
+                self.menu["display"].blit(menus[i], (i * 200, 0))
+                self.buttons["remove"].built(self.display)
+                if self.buttons["remove"].is_just_pressed():
                     remove.append(i)
-            if not self.animations["menu"].is_animating():
-                if box.get_rect(topleft=(0,y - 30)).collidepoint(mx, my) and mouse[0]:
-                    if y <= 400:
-                        self.animations["menu"].start = (0, 400)
-                        self.animations["menu"].end = (0, 600)
-                    elif y >= 600:
-                        self.animations["menu"].start = (0, 600)
-                        self.animations["menu"].end = (0, 400)
-                    self.animations["menu"].update_distance()
-                self.display.blit(box, (0,y - 30))
+            if not animation.is_animating():
+                if y <= 400:
+                    if self.buttons["menu_down"].is_just_pressed():
+                        animation.start = (0, 400)
+                        animation.end = (0, 600)
+                        animation.update_distance()
+                    self.buttons["menu_down"].built(self.display)
+                elif y >= 600:
+                    if self.buttons["menu_up"].is_just_pressed():
+                        animation.start = (0, 600)
+                        animation.end = (0, 400)
+                        animation.update_distance()
+                    self.buttons["menu_up"].built(self.display)
             if remove:
-                self.menus.pop(remove[0])
-            self.display.blit(self.menu, (0,y))
-            y = self.animations["menu"].anim()
+                menus.pop(remove[0])
+            self.display.blit(self.menu["display"], (0,y))
+            y = self.menu["animation"].anim()
 
-
-
+    def __draw_line(self) -> None:
+        for hub in self.map.hubs:
+            x, y = hub.position
+            x, y = self.__draw_pos((x * SPACE, y * SPACE))
+            for net in hub.connections:
+                xh, yh = net["HUB"].position
+                xh, yh = self.__draw_pos((xh * SPACE, yh * SPACE))
+                pygame.draw.line(self.display, rgb("brown"),
+                                (x + self.size / 2, y + self.size / 2),
+                                (xh + + self.size / 2, yh + + self.size / 2), 5)
 # -----------------------drawing hub-------------------------
-    def __draw_hub(self, hub: Hub) -> None:
+    def __draw_hub(self) -> None:
 # --------------------------DRAW BOX-----------------------------
-        x, y = hub.position
-        x, y = self.__draw_pos((x * SPACE, y * SPACE))
-        box = hub.image
-        box = pygame.transform.scale(box, (self.size, self.size))
-        self.display.blit(box, (x, y - self.size / 4))
-        for net in hub.connections:
-            xh, yh = net["HUB"].position
-            xh, yh = self.__draw_pos((xh * SPACE, yh * SPACE))
-            pygame.draw.line(self.display,
-                             rgb("cyan"),
-                             (x + self.size / 2, y + self.size / 4),
-                             (xh + self.size / 2, yh + self.size / 4))
-# --------------------CHECK MOUSE POSITION------------------------
-        xm, xy = pygame.mouse.get_pos()
-        rect = box.get_rect(topleft=(x, y))
-        mouse = pygame.mouse.get_just_pressed()
-        if rect.collidepoint(xm, xy):
-            self.display.blit(self.__draw_text(hub.name, self.size, "black"),
-                              (x + self.size / 4, y - self.size / 2))
-            if mouse[0]:
-                if hub.menu not in self.menus:
-                    self.menus.append(hub.menu)
+        for hub in self.map.hubs:
+            x, y = hub.position
+            x, y = self.__draw_pos((x * SPACE, y * SPACE))
+            box = hub.image
+            box = pygame.transform.scale(box, (self.size, self.size))
+            self.display.blit(box, (x, y - self.size / 4))
+    # --------------------CHECK MOUSE POSITION------------------------
+            xm, xy = pygame.mouse.get_pos()
+            rect = box.get_rect(topleft=(x, y))
+            mouse = pygame.mouse.get_just_pressed()
+            if rect.collidepoint(xm, xy):
+                self.display.blit(self.__draw_text(hub.name, self.size, "black"),
+                                (x + self.size / 4, y - self.size / 2))
+                if mouse[0]:
+                    if hub.menu not in self.menu["menus"] and len(self.menu["menus"]) < 6:
+                        self.menu["menus"].append(hub.menu)
 # -----------------------drawing drone---------------------------
     def __draw_drone(self, drone: Drone, pause) -> None:
         image = drone.image.anim()
         image = pygame.transform.scale(image, (self.size, self.size))
         if drone.image.start == 8:
             drone.image.start = 0
-        x, y = self.__draw_pos((drone.x * SPACE, drone.y * SPACE))
+        x, y = self.__draw_pos((drone.pos[0] * SPACE, drone.pos[1] * SPACE))
         self.display.blit(image, (x, y - self.size / 2))
         if drone.movement.is_animating() and not pause:
             drone.move()
@@ -209,51 +229,44 @@ class Visualizor:
             self.camera[1] = 700 - (x + y + 10) * SPACE * (self.size / 4)
 
     def check_click(self):
-        key = pygame.mouse.get_just_pressed()
-        pos = pygame.mouse.get_pos()
-        buttons = {"pause": False, "reset": False}
-        if key[0]:
-            pause_rect = self.buttons["pause"].get_rect(topleft=(1168, 0))
-            reset_rect = self.buttons["reset"].get_rect(topleft=(1136, 0))
-            speed_up_rect = self.buttons["speed_up"].get_rect(topleft=(1168, 32))
-            speed_down_rect = self.buttons["speed_down"].get_rect(topleft=(1136, 32))
-            if pause_rect.collidepoint(pos):
-                buttons["pause"] = True
-            if reset_rect.collidepoint(pos):
-                buttons["reset"] = True
-            if speed_down_rect.collidepoint(pos):
-                for drone in self.drones:
-                    if drone.speed < 0.02:
-                        print("hhh", drone.speed)
-                        break
-                    drone.speed -= 0.01
-                    drone.movement = Movement((drone.x, drone.y), drone.next_hub.position, drone.speed)
-            elif speed_up_rect.collidepoint(pos):
-                for drone in self.drones:
-                    drone.speed += 0.01
-                    drone.movement = Movement((drone.x, drone.y), drone.next_hub.position, drone.speed)
-        key = pygame.mouse.get_pressed()
-        if key[0]:
-            zoom_in_rect = self.buttons["reset"].get_rect(topleft=(1168, 304))
-            zoom_out_rect = self.buttons["reset"].get_rect(topleft=(1168, 368))
-            if zoom_in_rect.collidepoint(pos):
-                self.size += 1
-            elif zoom_out_rect.collidepoint(pos) and self.size > 28:
-                self.size -= 1
+        buttons = {"pause": False, "reset": False, "music": False}
+        if self.buttons["pause"].is_just_pressed():
+            self.sounds["click"].play()
+            buttons["pause"] = True
+        if self.buttons["reset"].is_just_pressed():
+            self.sounds["click"].play()
+            buttons["reset"] = True
+        if self.buttons["write"].is_just_pressed():
+            self.sounds["click"].play()
+            self.solver.writer()
+        if self.buttons["speed_down"].is_just_pressed():
+            self.sounds["click"].play()
+            for drone in self.drones:
+                drone.speed -= 0.01
+                drone.movement = Movement(drone.pos, drone.next_hub.position, drone.speed)
+        if self.buttons["song"].is_just_pressed():
+            self.sounds["click"].play()
+            buttons["music"] = True
+        elif self.buttons["speed_up"].is_just_pressed():
+            self.sounds["click"].play()
+            for drone in self.drones:
+                drone.speed += 0.01
+                drone.movement = Movement(drone.pos, drone.next_hub.position, drone.speed)
+        if self.buttons["zoom_in"].is_pressed():
+            self.sounds["click"].play()
+            self.size += 1
+        elif self.buttons["zoom_out"].is_pressed() and self.size > 28:
+            self.sounds["click"].play()
+            self.size -= 1
         return buttons
 
     def reset(self):
-        for hub in self.map.hubs:
-            hub.visitors = set()
-            for line in hub.lines:
-                line.visitors = set()
         for drone in self.drones:
-            self.map.start_hub.visitors.add(drone)
-            drone.x, drone.y = self.map.start_hub.position
+            drone.pos = self.map.start_hub.position
             drone.current_hub = self.map.start_hub
-            drone.path_finder()
-            self.map.reset()
+            drone.next_hub = drone.path[1]
             drone.has_arrived = False
+            drone.movement = Movement(drone.current_hub.position, drone.next_hub.position, drone.speed)
 
     def game(self) -> None:
         ground = pygame.image.load("assets/Ground/ground.png")
@@ -265,51 +278,44 @@ class Visualizor:
                    "xy": pygame.image.load("assets/Ground/water_xy.png"),
                    "x0": pygame.image.load("assets/Ground/water_x0.png"),
                    "y0": pygame.image.load("assets/Ground/water_y0.png")}
-        remove = pygame.image.load("assets/menu/remove.png")
         pause = True
-        count = 0
+        music = True
+        index = 0
+        self.sounds["song"].play()
         while True:
+            if music and not self.sounds["song"].is_playing():
+                self.sounds["song"].play()
+            elif not music and self.sounds["song"].is_playing():
+                self.sounds["song"].stop()
             self.display.fill((125, 255, 255))
             self.__draw_grid(ground, borders, water)
-            for hub in self.map.hubs:
-                self.__draw_hub(hub)
+            self.__draw_line()
+            self.__draw_hub()
             all_arrived = True
-            all_in_goal = True
             for drone in self.drones:
                 self.__draw_drone(drone, pause)
                 if not drone.has_arrived:
                     all_arrived = False
             if all_arrived and not pause:
+                index += 1
                 for drone in self.drones:
-                    if drone.current_hub.name != drone.next_hub.name:
-                        print(f"{drone.name}-{drone.next_hub.name}", end=" ", flush=True)
-                    drone.update()
-                    self.map.reset()
                     drone.has_arrived = False
-                    if drone.current_hub.name != self.map.end_hub.name:
-                        all_in_goal = False
-                if not all_in_goal:
-                    print("")
-                    count += 1
-            text = self.__draw_text(f"count: {count}", 30, "black")
-            self.display.blit(text, (0,0))
-            if pause:
-                self.display.blit(self.buttons["resume"], (1168, 0))
-            else:
-                self.display.blit(self.buttons["pause"], (1168, 0))
-            self.display.blit(self.buttons["reset"], (1136, 0))
-            self.display.blit(self.buttons["speed_up"], (1168, 32))
-            self.display.blit(self.buttons["speed_down"], (1136, 32))
-            self.display.blit(self.buttons["zoom_in"], (1168, 304))
-            self.display.blit(self.buttons["zoom_out"], (1168, 368))
-            self.__draw_menu(remove)
+                    drone.current_hub = drone.next_hub
+                    if drone.current_hub.name != drone.goal.name:
+                        drone.next_hub = drone.path[index]
+                    drone.movement = Movement(drone.current_hub.position, drone.next_hub.position, drone.speed)    
+            self.__draw_menu()
             self.__check_buttons()
+            self.__draw_buttons(pause)
             check_buttons = self.check_click()
             if check_buttons["pause"]:
                 pause = not pause
             if check_buttons["reset"]:
                 self.reset()
                 pause = True
+                index = 0
+            if check_buttons["music"]:
+                music = not music
             self.screen.blit(self.display, (0, 0))
             self.clock.tick(120)
             pygame.display.update()

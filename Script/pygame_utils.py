@@ -62,3 +62,44 @@ class Animation:
         if self.start != self.end:
             return True
         return False
+
+class Button:
+    def __init__(self, path: str, pos) -> None:
+        self.image = pygame.image.load(path)
+        self.pos = pos
+        self.rect = self.image.get_rect(topleft=pos)
+
+    def change_pos(self, pos):
+        self.pos = pos
+        self.rect = self.image.get_rect(topleft=pos)
+
+    def is_just_pressed(self) -> bool:
+        mouse = pygame.mouse.get_just_pressed()
+        if mouse[0] and self.rect.collidepoint(pygame.mouse.get_pos()):
+                return True
+        return False
+
+    def is_pressed(self) -> bool:
+        mouse = pygame.mouse.get_pressed()
+        if mouse[0] and self.rect.collidepoint(pygame.mouse.get_pos()):
+                return True
+        return False
+
+    def built(self, display) -> None:
+        display.blit(self.image, self.pos)
+
+class Sound:
+    def __init__(self, path: str) -> None:
+        self.song = pygame.mixer.Sound(path)
+        self.event = None
+
+    def is_playing(self):
+        if self.event and self.event.get_busy():
+            return True
+        return False
+
+    def play(self):
+        self.event = self.song.play()
+
+    def stop(self):
+        self.song.stop()
