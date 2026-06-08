@@ -1,31 +1,34 @@
 from Hubs import Hub, Map
-from time import sleep
-from pygame_utils import Animation
+from pygame_utils import Animation, Movement
+
 
 class Drone:
-    def __init__(self, name, start: Hub, end: Hub) -> None:
+    def __init__(self, name: str, start: Hub, end: Hub) -> None:
         self.start = start
         self.current_hub = start
         self.goal = end
         self.name = name
-        self.pos = (start.position[0], start.position[1])
-        self.path = []
-        self.current_path = []
-        self.next_hub: Hub = None
-        self.last_visited = None
+        self.pos = (float(start.position[0]),
+                    float(start.position[1]))
+        self.path: list[Hub] = []
+        self.current_path: list[Hub] = []
+        self.next_hub: Hub = start
+        self.last_visited: Hub = start
         self.image = Animation("Drone", "assets/Drone/", 0, 8, 3, 8)
-        self.movement = None
+        self.movement: None | Movement = None
         self.has_arrived = False
         self.speed = 0.1
 
-    def move(self):
-        self.movement.anim()
-        self.pos = self.movement.start
+    def move(self) -> None:
+        if self.movement:
+            self.movement.anim()
+            self.pos = self.movement.start
 
-    def update(self, condition):
+    def update(self, condition: int) -> None:
         if self.current_hub.name != self.goal.name:
             if condition:
-                if isinstance(self.current_hub, Hub) and self.current_hub.name != self.next_hub.name:
+                if (isinstance(self.current_hub, Hub)
+                   and self.current_hub.name != self.next_hub.name):
                     for line in self.current_hub.lines:
                         if self.next_hub in line.hubs:
                             line.visitors.remove(self)
@@ -42,11 +45,14 @@ class Drone:
                         else:
                             line = None
                 if ((self.next_hub.is_free()
-                   or (not isinstance(self.current_hub, Hub)and self in self.next_hub.visitors))
+                   or (not isinstance(self.current_hub, Hub)
+                   and self in self.next_hub.visitors))
                    and (not line or (line and line.is_free()))
-                   and not (not isinstance(self.next_hub, Hub) and not self.current_path[2].is_free())):
+                   and not (not isinstance(self.next_hub, Hub)
+                   and not self.current_path[2].is_free())):
                     self.current_hub.visitors.remove(self)
-                    if not (isinstance(self.next_hub, Hub) and self.next_hub.zone == "restricted"):
+                    if not (isinstance(self.next_hub, Hub)
+                            and self.next_hub.zone == "restricted"):
                         self.next_hub.visitors.add(self)
                     if not isinstance(self.next_hub, Hub):
                         self.current_path[2].visitors.add(self)
@@ -60,7 +66,7 @@ class Drone:
         else:
             self.next_hub = self.current_hub
 
-    def path_finder(self):
+    def path_finder(self) -> None:
         neighbors = [self.current_hub]
         visited = []
         current = self.current_hub
@@ -82,13 +88,15 @@ class Drone:
                             break
                     if not hub.is_free() or not line.is_free():
                         g += 2
-                if not hub in visited and not hub in neighbors:
+                if hub not in visited and hub not in neighbors:
                     hub.path = current
                     hub.g = g
                     neighbors.append(hub)
                 if hub in visited and (g < hub.g):
                     hub.path == current
             neighbors.remove(current)
+            if not neighbors:
+                raise Exception("There is no way to solve this map")
             visited.append(current)
             current = neighbors[0]
             for neighbor in neighbors:
@@ -108,6 +116,7 @@ class Drone:
             hub = hub.path
         self.update(False)
 
+
 class map_solver:
     def __init__(self, data: Map) -> None:
         self.map = data
@@ -120,7 +129,7 @@ class map_solver:
             drone.path.append(drone.next_hub)
             self.drones.append(drone)
 
-    def solve(self):
+    def solve(self) -> None:
         while True:
             is_all_arrived = True
             for drone in self.drones:
@@ -133,14 +142,15 @@ class map_solver:
             if is_all_arrived:
                 break
 
-    def writer(self):
+    def writer(self) -> None:
         i = 0
         for drone in self.drones:
             drone.last_visited = self.map.start_hub
         while True:
             all_writed = True
             for drone in self.drones:
-                if i < len(drone.path) and drone.path[i].name != drone.last_visited.name:
+                if (i < len(drone.path)
+                   and drone.path[i].name != drone.last_visited.name):
                     print(f"{drone.name}-{drone.path[i].name} ", end="")
                     drone.last_visited = drone.path[i]
                     all_writed = False

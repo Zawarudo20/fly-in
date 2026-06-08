@@ -5,16 +5,16 @@ import re
 
 class Parser:
     @staticmethod
-    def __get_hub_data(text: tuple[str]) -> Hub:
+    def __get_hub_data(text: tuple[str, str, str, str]) -> Hub:
         name = text[0]
         pos = (int(text[1]), int(text[2]))
         if text[3]:
-            color = re.findall(r"color=(\w+)", text[3], re.IGNORECASE)
-            color = color[0] if color else "white"
-            zone = re.findall(r"zone=(\w+)", text[3], re.IGNORECASE)
-            zone = zone[0] if zone else "normal"
-            size = re.findall(r"max_drones=(\d+)", text[3], re.IGNORECASE)
-            size = size[0] if size else "1"
+            find = re.findall(r"color=(\w+)", text[3], re.IGNORECASE)
+            color = find[0] if find else "white"
+            find = re.findall(r"zone=(\w+)", text[3], re.IGNORECASE)
+            zone = find[0] if find else "normal"
+            find = re.findall(r"max_drones=(\d+)", text[3], re.IGNORECASE)
+            size = find[0] if find else "1"
         else:
             color = "cyan"
             zone = "normal"
@@ -27,7 +27,10 @@ class Parser:
         return hub
 
     @staticmethod
-    def __get_connection_data(net: tuple[str], hubs: list[Hub], start: Hub, end: Hub) -> None:
+    def __get_connection_data(net: tuple[str, str, str],
+                              hubs: list[Hub],
+                              start: Hub,
+                              end: Hub) -> None:
         name = net[0]
         hub1 = None
         hub2 = None
@@ -52,8 +55,8 @@ class Parser:
                     break
         if not hub1 or not hub2:
             return
-        size = re.findall(r"max_link_capacity=(-?\d+)", net[2])
-        size = int(size[0]) if size else 1
+        find = re.findall(r"max_link_capacity=(-?\d+)", net[2])
+        size = int(find[0]) if find else 1
         a = {"HUB": hub1, "SIZE": size}
         b = {"HUB": hub2, "SIZE": size}
         hub1.connections.append(b)
@@ -62,25 +65,28 @@ class Parser:
     def get_values(self, file_name: str) -> Map:
         with open(file_name) as fd:
             text = fd.read()
+        text = re.sub(r"^\s*#.*$", "", text, flags=re.MULTILINE)
         drones = re.findall(r"^\s*nb_drones:\s*(-?\d+)",
                             text, re.IGNORECASE)
-        start = re.findall(r"^start_hub:\s*(\w+)\s+(-?\d+)\s+"
-                           r"(-?\d+)\s*(?:\[(.*?)\])?",
-                           text, re.MULTILINE | re.IGNORECASE)
-        end = re.findall(r"^end_hub:\s*(\w+)\s+(-?\d+)\s+"
-                         r"(-?\d+)\s*(?:\[(.*?)\])?",
-                         text, re.IGNORECASE | re.MULTILINE)
+        find_start = re.findall(r"^start_hub:\s*(\w+)\s+(-?\d+)\s+"
+                                r"(-?\d+)\s*(?:\[(.*?)\])?",
+                                text, re.MULTILINE | re.IGNORECASE)
+        find_end = re.findall(r"^end_hub:\s*(\w+)\s+(-?\d+)\s+"
+                              r"(-?\d+)\s*(?:\[(.*?)\])?",
+                              text, re.IGNORECASE | re.MULTILINE)
         hubs = re.findall(r"^hub:\s*(\w+)\s+(-?\d+)\s+"
                           r"(-?\d+)\s*(?:\[(.*?)\])?",
                           text, re.IGNORECASE | re.MULTILINE)
         nets = re.findall(r"^connection:\s*(\w+)-(\w+)\s*(?:\[(.*?)\])?",
                           text, re.IGNORECASE | re.MULTILINE)
-        if not start:
+        if not drones:
+            raise ValueError("Drones number is missing")
+        if not find_start:
             raise ValueError("Start hub is missing")
-        if not end:
+        if not find_end:
             raise ValueError("End hub is missing")
-        start = self.__get_hub_data(start[0])
-        end = self.__get_hub_data(end[0])
+        start = self.__get_hub_data(find_start[0])
+        end = self.__get_hub_data(find_end[0])
         positions = []
         for hub in hubs:
             positions.append(self.__get_hub_data(deepcopy(hub)))
