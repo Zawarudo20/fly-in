@@ -43,7 +43,7 @@ class Parser:
             data = data[0].split()
             for keywargs in data:
                 keyword = keywargs.split("=")
-                if len(keyword) != 2:
+                if len(keyword) != 2 or keyword[1] == "":
                     raise Parsing_Error(self.line, self.file,
                                         "MetaData_Error: Wrong Syntax use this"
                                         "--> \"<Key>=<Value>\"")
@@ -124,7 +124,7 @@ class Parser:
             data = data[0].split()
             for keywargs in data:
                 keyword = keywargs.split("=")
-                if len(keyword) != 2:
+                if len(keyword) != 2 or keyword[0] == "":
                     raise Parsing_Error(self.line, self.file,
                                         "MetaData_Error: Wrong Syntax use this"
                                         "--> \"<Key>=<Value>\"")
@@ -173,15 +173,8 @@ class Parser:
                 raise Parsing_Error(self.line, self.file,
                                     "Hub_Error: Hub position is repeated")
 
-    def get_map(self) -> Map:
-        with open(sys.argv[1]) as fd:
-            text = fd.read()
-        lines = text.split("\n")
-        drones: None | int = None
-        start_hub = None
-        hubs: list[Hub] = []
-        end_hub = None
-        connections = []
+    def __get_nb_drones(self, lines: list[str]) -> int:
+        drones = None
         for line in lines:
             if not line:
                 self.line += 1
@@ -191,10 +184,6 @@ class Parser:
                 self.line += 1
                 continue
             nb_drones = re.findall(r"^nb_drones: .*", line)
-            start = re.findall(r"^start_hub: .*", line)
-            hub = re.findall(r"^hub: .*", line)
-            end = re.findall(r"^end_hub: .*", line)
-            connection = re.findall(r"^connection: .*", line)
             if nb_drones:
                 nb_drones = re.findall(r"^\s*-?\d+", line[11:])
                 if not nb_drones:
@@ -219,6 +208,47 @@ class Parser:
                                         self.file,
                                         "Value error nb_drone should be"
                                         "greater than or equal to 1")
+                self.line += 1
+                break
+            else:
+                raise Parsing_Error(self.line,
+                                    self.file,
+                                    "Syntax_Error: Wrong Syntax or nb_drones"
+                                    " is not the first parameter")
+        if not drones:
+            raise ValueError("Drones number are messing")
+        return drones
+
+    def get_map(self) -> Map:
+        with open(sys.argv[1]) as fd:
+            text = fd.read()
+        lines = text.split("\n")
+        start_hub = None
+        hubs: list[Hub] = []
+        end_hub = None
+        connections = []
+        drones = self.__get_nb_drones(lines)
+        i = self.line
+        while i - 2 >= 0:
+            lines.pop(i - 2)
+            i -= 1
+        for line in lines:
+            if not line:
+                self.line += 1
+                continue
+            line = re.sub(r"^\s*", "", line)
+            if not line or line[0] == "#":
+                self.line += 1
+                continue
+            nb_drones = re.findall(r"^nb_drones: .*", line)
+            start = re.findall(r"^start_hub: .*", line)
+            hub = re.findall(r"^hub: .*", line)
+            end = re.findall(r"^end_hub: .*", line)
+            connection = re.findall(r"^connection: .*", line)
+            if nb_drones:
+                raise Parsing_Error(self.line,
+                                    self.file,
+                                    "nb_drones_error: Drones number repeated")
             elif start:
                 if start_hub:
                     raise Parsing_Error(self.line,
@@ -240,8 +270,8 @@ class Parser:
                 self.__check_hub(end_hub, hubs)
                 hubs.append(end_hub)
             elif connection:
-                connection = self.__get_connection(line[12:])
-                net = connection["connection"]
+                network = self.__get_connection(line[12:])
+                net = network["connection"]
                 if len(net) == 1:
                     raise Parsing_Error(self.line,
                                         self.file,
@@ -254,14 +284,12 @@ class Parser:
                                         " is repeated")
                 connections.append(net)
                 hub1, hub2 = net
-                self.__check_connection(hub1, hub2, connection["size"], hubs)
+                self.__check_connection(hub1, hub2, network["size"], hubs)
             else:
                 raise Parsing_Error(self.line,
                                     self.file,
                                     "Syntax_Error: Wrong Syntax")
             self.line += 1
-        if not drones:
-            raise ValueError("Drones number are messing")
         if not start_hub:
             raise ValueError("start_hub is messing")
         if not end_hub:
