@@ -126,6 +126,7 @@ class map_solver:
             data.start_hub.visitors.add(drone)
             drone.path_finder()
             data.reset()
+            drone.path.append(drone.start)
             drone.path.append(drone.next_hub)
             self.drones.append(drone)
 
@@ -145,15 +146,15 @@ class map_solver:
     def writer(self) -> None:
         i = 0
         for drone in self.drones:
-            drone.last_visited = self.map.start_hub
+            drone.last_visited = drone.start
         while True:
             all_writed = True
             for drone in self.drones:
-                if (i < len(drone.path)
-                   and drone.path[i].name != drone.last_visited.name):
+                if i < len(drone.path):
+                    all_writed = False
+                # if drone.path[i].name != drone.last_visited.name:
                     print(f"{drone.name}-{drone.path[i].name} ", end="")
                     drone.last_visited = drone.path[i]
-                    all_writed = False
             print("")
             if all_writed:
                 break

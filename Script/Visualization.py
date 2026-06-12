@@ -124,7 +124,7 @@ class Visualizer:
         solver.solve()
         self.drones: list[Drone] = solver.drones
         for drone in self.drones:
-            drone.current_hub = data.start_hub
+            drone.current_hub = drone.path[0]
             drone.next_hub = drone.path[1]
             drone.movement = Movement(drone.start.position,
                                       drone.next_hub.position, drone.speed)
@@ -291,7 +291,7 @@ class Visualizer:
             mouse = pygame.mouse.get_just_pressed()
             if rect.collidepoint(xm, xy):
                 self.display.blit(self.__draw_text(hub.name,
-                                                   self.size,
+                                                   self.size // 2,
                                                    "black"),
                                   (x + self.size / 4, y - self.size / 2))
                 if mouse[0]:
@@ -340,7 +340,7 @@ class Visualizer:
         if self.buttons["speed_down"].is_just_pressed():
             self.sounds["click"].play()
             for drone in self.drones:
-                if drone.movement:
+                if drone.movement and drone.speed >= 0.02:
                     drone.speed -= 0.01
                     drone.movement = Movement(drone.pos,
                                               drone.next_hub.position,
@@ -390,7 +390,7 @@ class Visualizer:
         blocked = pygame.image.load("assets/box/box_blocked.png")
         pause = True
         music = True
-        index = 0
+        index = 1
         self.sounds["song"].play()
         while True:
             if music and not self.sounds["song"].is_playing():
@@ -406,7 +406,7 @@ class Visualizer:
                 self.__draw_drone(drone, pause)
                 if not drone.has_arrived:
                     all_arrived = False
-            if all_arrived and not pause:
+            if all_arrived and not pause and index < len(drone.path):
                 index += 1
                 for drone in self.drones:
                     drone.has_arrived = False
@@ -416,6 +416,8 @@ class Visualizer:
                     drone.movement = Movement(drone.current_hub.position,
                                               drone.next_hub.position,
                                               drone.speed)
+            tunrs = self.__draw_text(f"Turns: {index - 1}", 15, "black")
+            self.display.blit(tunrs, (10, 10))
             self.__draw_menu()
             self.__check_buttons()
             self.__draw_buttons(pause)
@@ -425,7 +427,7 @@ class Visualizer:
             if check_buttons["reset"]:
                 self.reset()
                 pause = True
-                index = 0
+                index = 1
             if check_buttons["music"]:
                 music = not music
             self.screen.blit(self.display, (0, 0))
