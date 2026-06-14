@@ -1,98 +1,77 @@
 from webcolors import name_to_rgb as rgb
-from Drones import Drone, map_solver
-from Hubs import Map, Hub
-from pygame_utils import Button, Movement, Sound
+from Drones import Drone, Map_solver
+from Hubs import Map
+from pygame_utils import Button, Movement, Animation
+from Fly_in_utils import Deck, Menu
+from Parsing import Parser
 import sys
 import pygame
 
 
-class Card:
-    def __init__(self,
-                 hub: Hub,
-                 image: pygame.Surface,
-                 box: pygame.Surface) -> None:
-        self.name = hub.name
-        self.color = hub.color
-        self.x = hub.position[0]
-        self.y = hub.position[1]
-        self.zone = hub.zone
-        self.size = hub.size
-        self.image = image
-        self.box = box
-        self.fill_card()
-
-    @staticmethod
-    def __draw_text(text: str, size: int, color: str) -> pygame.Surface:
-        font = pygame.font.Font("assets/font/Minecraft.ttf", size)
-        result = font.render(text, True, rgb(color))
-        return result
-
-    def fill_card(self) -> None:
-        width, height = self.image.get_size()
-        for h in range(height):
-            for w in range(width):
-                color = self.image.get_at((w, h))
-                if color == (255, 0, 0):
-                    self.image.set_at((w, h), rgb(self.color))
-        name = self.__draw_text(f"{self.name}", 15, "black")
-        self.image.blit(name, (21 + (159 - name.size[0]) // 2,
-                               144 + (17 - name.size[1]) // 2))
-        self.image.blit(self.__draw_text(f"{self.x}", 20, "red"),
-                        (40, 270))
-        self.image.blit(self.__draw_text(f"{self.y}", 20, "green"),
-                        (70, 270))
-        zone = self.__draw_text(f"{self.zone}", 20, "black")
-        self.image.blit(zone, (25 + (149 - zone.size[0]) // 2,
-                               186 + (88 - zone.size[1]) // 2))
-        size = self.__draw_text(f"{self.size}", 15, "black")
-        self.image.blit(size, (150 + (25 - size.size[0]) // 2,
-                               23 + (18 - size.size[1]) // 2))
-        box = pygame.transform.scale(self.box, (125, 125))
-        self.image.blit(box, (40, 8))
-
-
-class Menu:
-    def __init__(self) -> None:
-        self.display = pygame.Surface((1200, 300), pygame.SRCALPHA)
-        self.card = pygame.image.load("assets/menu/card.png")
-        self.cards: list[Card] = []
-        self.animation = Movement((0, 400), (0, 400), 20)
-        self.pos = (0.0, 400.0)
-
-    def down(self) -> None:
-        self.animation.start = (0, 400)
-        self.animation.end = (0, 600)
-        self.animation.update_distance()
-
-    def up(self) -> None:
-        self.animation.start = (0, 600)
-        self.animation.end = (0, 400)
-        self.animation.update_distance()
-
-    def fill_menu(self) -> None:
-        self.display.fill((0, 0, 0, 0))
-        for i in range(len(self.cards)):
-            self.display.blit(self.cards[i].image, (i * 200, 0))
-
-    def add_card(self, hub: Hub, image: pygame.Surface) -> None:
-        if len(self.cards) > 5:
-            return
-        for card in self.cards:
-            if card.name == hub.name:
-                return
-        card = Card(hub, self.card.copy(), image)
-        self.cards.append(card)
-
-    def remove_card(self, card: Card) -> None:
-        self.cards.remove(card)
-
-
-class Visualizer:
-    def __init__(self, data: Map, solver: map_solver) -> None:
+class Main_Menu:
+    def __init__(self, parser: Parser, solver: Map_solver) -> None:
         pygame.display.set_caption("fly_in")
-        self.screen = pygame.display.set_mode((1200, 700))
-        self.display = pygame.Surface((1200, 700), pygame.SRCALPHA)
-        self.menu = Menu()
+        pygame.mixer.set_num_channels(2)
+        self.song = pygame.Sound("assets/sounds/menu_song.mp3")
+        pygame.mixer.Channel(0).play(self.song, -1)
+        self.parser = parser
+        self.solver = solver
+        self.display = pygame.display.set_mode((1200, 700))
+        self.menu_logo = pygame.image.load("assets/main_menu/menu_logo.png")
+        self.menu_logo = pygame.transform.scale(self.menu_logo, (400, 400))
+        self.logo = pygame.image.load("assets/main_menu/logo.png")
+        self.menu = pygame.image.load("assets/main_menu/menu.png")
+        self.drone = Animation("Drone", "assets/Drone/", 0, 8, 10, 8)
+        self.start = Button("assets/main_menu/start.png", (250, 350))
+        self.music = Button("assets/main_menu/music.png", (250, 430))
+        self.exit = Button("assets/main_menu/exit.png", (250, 510))
+
+    def visual(self) -> None:
+        data = None
+        while True:
+            if self.drone.start == 8:
+                self.drone.start = 0
+            self.display.fill((125, 255, 255))
+            self.display.blit(self.menu, (0, 0))
+            self.display.blit(self.menu_logo, (710, 160))
+            self.display.blit(self.logo, (150, 40))
+            self.start.blit(self.display)
+            self.exit.blit(self.display)
+            self.music.blit(self.display)
+            image = self.drone.anim()
+            image = pygame.transform.scale(image, (100, 100))
+            self.display.blit(image, (860, 310))
+            if self.exit.is_just_pressed():
+                pygame.quit()
+                exit(0)
+            if self.music.is_just_pressed():
+                if pygame.mixer.Channel(0).get_busy():
+                    self.music.image = pygame.image.load(
+                        "assets/main_menu/music_off.png")
+                    pygame.mixer.Channel(0).stop()
+                else:
+                    self.music.image = pygame.image.load(
+                        "assets/main_menu/music.png")
+                    pygame.mixer.Channel(0).play(self.song, -1)
+            if self.start.is_just_pressed():
+                if not data:
+                    data = self.parser.get_map()
+                    self.solver.solve(data)
+                game = Game(data, self.solver)
+                game.visual(self.display)
+                if pygame.mixer.Channel(0).get_busy():
+                    pygame.mixer.Channel(0).play(self.song, -1)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit(0)
+            pygame.display.update()
+
+
+class Game:
+    def __init__(self, data: Map, solver: Map_solver) -> None:
+        self.display = pygame.surface.Surface((1200, 700))
+        self.deck = Deck()
         self.buttons = {"pause": Button("assets/menu/pause.png",
                                         (1168, 0)),
                         "resume": Button("assets/menu/resume.png",
@@ -109,19 +88,21 @@ class Visualizer:
                                              (1136, 64)),
                         "write": Button("assets/menu/write.png",
                                         (1104, 0)),
-                        "song": Button("assets/menu/song.png",
-                                       (1072, 0)),
                         "menu_down": Button("assets/menu/down.png",
                                             (0, 368)),
                         "menu_up": Button("assets/menu/up.png",
                                           (0, 568)),
                         "remove": Button("assets/menu/remove.png",
                                          (0, 0))}
-        self.sounds = {"song": Sound("assets/sounds/song.mp3"),
-                       "click": Sound("assets/sounds/click.mp3")}
+        self.channels = {"music": pygame.mixer.Channel(0),
+                         "sfx": pygame.mixer.Channel(1)}
+        self.sounds = {"song": pygame.Sound("assets/sounds/song.mp3"),
+                       "draw_card": pygame.Sound(
+                           "assets/sounds/draw_card.mp3"),
+                       "move": pygame.Sound("assets/sounds/move.mp3")}
+        self.menu = Menu()
         self.map = data
         self.solver = solver
-        solver.solve()
         self.drones: list[Drone] = solver.drones
         for drone in self.drones:
             drone.current_hub = drone.path[0]
@@ -131,7 +112,6 @@ class Visualizer:
         self.size = 32
         self.camera = [600, 60]
         self.camera_pos = (0, 0)
-        self.clock = pygame.time.Clock()
         self.isdragging = False
 
 # ---------------------Get position for drawing-------------------
@@ -146,7 +126,8 @@ class Visualizer:
     @staticmethod
     def __draw_text(text: str, size: int, color: str) -> pygame.Surface:
         font = pygame.font.Font("assets/font/Minecraft.ttf", size)
-        result = font.render(text, True, rgb(color))
+        r, g, b = rgb(color)
+        result = font.render(text, True, (r, g, b, 10))
         return result
 
 # -----------------------drawing grid-------------------------
@@ -207,40 +188,39 @@ class Visualizer:
 
     def __draw_buttons(self, pause: bool) -> None:
         if pause:
-            self.buttons["resume"].built(self.display)
+            self.buttons["resume"].blit(self.display)
         else:
-            self.buttons["pause"].built(self.display)
-        self.buttons["reset"].built(self.display)
-        self.buttons["write"].built(self.display)
-        self.buttons["song"].built(self.display)
-        self.buttons["speed_up"].built(self.display)
-        self.buttons["speed_down"].built(self.display)
-        self.buttons["zoom_in"].built(self.display)
-        self.buttons["zoom_out"].built(self.display)
+            self.buttons["pause"].blit(self.display)
+        self.buttons["reset"].blit(self.display)
+        self.buttons["write"].blit(self.display)
+        self.buttons["speed_up"].blit(self.display)
+        self.buttons["speed_down"].blit(self.display)
+        self.buttons["zoom_in"].blit(self.display)
+        self.buttons["zoom_out"].blit(self.display)
 
 # -----------------------drawing the menu-------------------------
     def __draw_menu(self) -> None:
-        self.menu.animation.anim()
-        self.menu.pos = self.menu.animation.start
-        if self.menu.cards:
-            y = self.menu.pos[1]
-            for i in range(len(self.menu.cards)):
+        self.deck.animation.anim()
+        self.deck.pos = self.deck.animation.start
+        if self.deck.cards:
+            y = self.deck.pos[1]
+            for i in range(len(self.deck.cards)):
                 pos = (200 * i + 168, y - 30)
                 self.buttons["remove"].change_pos(pos)
-                self.buttons["remove"].built(self.display)
+                self.buttons["remove"].blit(self.display)
                 if self.buttons["remove"].is_just_pressed():
-                    self.menu.remove_card(self.menu.cards[i])
-            if not self.menu.animation.is_animating():
+                    self.deck.remove_card(self.deck.cards[i])
+            if not self.deck.animation.is_animating():
                 if y <= 400:
                     if self.buttons["menu_down"].is_just_pressed():
-                        self.menu.down()
-                    self.buttons["menu_down"].built(self.display)
+                        self.deck.down()
+                    self.buttons["menu_down"].blit(self.display)
                 elif y >= 600:
                     if self.buttons["menu_up"].is_just_pressed():
-                        self.menu.up()
-                    self.buttons["menu_up"].built(self.display)
-            self.display.blit(self.menu.display, self.menu.pos)
-            self.menu.fill_menu()
+                        self.deck.up()
+                    self.buttons["menu_up"].blit(self.display)
+            self.display.blit(self.deck.display, self.deck.pos)
+            self.deck.fill_menu()
 
     def __draw_line(self) -> None:
         for hub in self.map.hubs:
@@ -295,7 +275,8 @@ class Visualizer:
                                                    "black"),
                                   (x + self.size / 4, y - self.size / 2))
                 if mouse[0]:
-                    self.menu.add_card(hub, box)
+                    self.deck.add_card(hub, box)
+                    self.channels["sfx"].play(self.sounds["draw_card"])
 
 # -----------------------drawing drone---------------------------
     def __draw_drone(self, drone: Drone, pause: bool) -> None:
@@ -311,7 +292,7 @@ class Visualizer:
             elif not drone.movement.is_animating():
                 drone.has_arrived = True
 
-    def __check_buttons(self) -> None:
+    def __check_buttons(self, screen: pygame.Surface) -> bool:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -325,20 +306,20 @@ class Visualizer:
                 self.camera[0] += event.pos[0] - self.camera_pos[0]
                 self.camera[1] += event.pos[1] - self.camera_pos[1]
                 self.camera_pos = event.pos
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    return self.menu.visual(screen, self.sounds["song"])
+        return False
 
     def check_click(self) -> dict:
-        buttons = {"pause": False, "reset": False, "music": False}
+        buttons = {"pause": False, "reset": False}
         if self.buttons["pause"].is_just_pressed():
-            self.sounds["click"].play()
             buttons["pause"] = True
         if self.buttons["reset"].is_just_pressed():
-            self.sounds["click"].play()
             buttons["reset"] = True
         if self.buttons["write"].is_just_pressed():
-            self.sounds["click"].play()
             self.solver.writer()
         if self.buttons["speed_down"].is_just_pressed():
-            self.sounds["click"].play()
             for drone in self.drones:
                 if drone.movement and drone.speed >= 0.02:
                     drone.speed -= 0.01
@@ -346,21 +327,15 @@ class Visualizer:
                                               drone.next_hub.position,
                                               drone.speed)
         elif self.buttons["speed_up"].is_just_pressed():
-            self.sounds["click"].play()
             for drone in self.drones:
                 if drone.movement:
                     drone.speed += 0.01
                     drone.movement = Movement(drone.pos,
                                               drone.next_hub.position,
                                               drone.speed)
-        if self.buttons["song"].is_just_pressed():
-            self.sounds["click"].play()
-            buttons["music"] = True
         if self.buttons["zoom_in"].is_pressed():
-            self.sounds["click"].play()
             self.size += 1
         elif self.buttons["zoom_out"].is_pressed() and self.size > 28:
-            self.sounds["click"].play()
             self.size -= 1
         return buttons
 
@@ -374,7 +349,7 @@ class Visualizer:
                                       drone.next_hub.position,
                                       drone.speed)
 
-    def game(self) -> None:
+    def visual(self, screen: pygame.Surface) -> None:
         ground = pygame.image.load("assets/Ground/ground.png")
         borders = {"x": pygame.image.load("assets/Ground/ground_x.png"),
                    "y": pygame.image.load("assets/Ground/ground_y.png"),
@@ -389,14 +364,10 @@ class Visualizer:
         restricted = pygame.image.load("assets/box/box_restricted.png")
         blocked = pygame.image.load("assets/box/box_blocked.png")
         pause = True
-        music = True
         index = 1
-        self.sounds["song"].play()
+        if self.channels["music"].get_busy():
+            self.channels["music"].play(self.sounds["song"], -1)
         while True:
-            if music and not self.sounds["song"].is_playing():
-                self.sounds["song"].play()
-            elif not music and self.sounds["song"].is_playing():
-                self.sounds["song"].stop()
             self.display.fill((125, 255, 255))
             self.__draw_grid(ground, borders, water)
             self.__draw_line()
@@ -407,6 +378,7 @@ class Visualizer:
                 if not drone.has_arrived:
                     all_arrived = False
             if all_arrived and not pause and index < len(drone.path):
+                self.channels["sfx"].play(self.sounds["move"])
                 index += 1
                 for drone in self.drones:
                     drone.has_arrived = False
@@ -419,7 +391,8 @@ class Visualizer:
             tunrs = self.__draw_text(f"Turns: {index - 1}", 15, "black")
             self.display.blit(tunrs, (10, 10))
             self.__draw_menu()
-            self.__check_buttons()
+            if self.__check_buttons(screen):
+                break
             self.__draw_buttons(pause)
             check_buttons = self.check_click()
             if check_buttons["pause"]:
@@ -428,8 +401,5 @@ class Visualizer:
                 self.reset()
                 pause = True
                 index = 1
-            if check_buttons["music"]:
-                music = not music
-            self.screen.blit(self.display, (0, 0))
-            self.clock.tick(120)
             pygame.display.update()
+            screen.blit(self.display, (0, 0))

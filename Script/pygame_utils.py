@@ -84,6 +84,7 @@ class Button:
         self.image = pygame.image.load(path)
         self.pos = pos
         self.rect = self.image.get_rect(topleft=pos)
+        self.sound = pygame.Sound("assets/sounds/click.mp3")
 
     def change_pos(self,
                    pos: tuple[int | float, int | float]) -> None:
@@ -93,6 +94,7 @@ class Button:
     def is_just_pressed(self) -> bool:
         mouse = pygame.mouse.get_just_pressed()
         if mouse[0] and self.rect.collidepoint(pygame.mouse.get_pos()):
+            pygame.Channel(1).play(self.sound)
             return True
         return False
 
@@ -102,22 +104,5 @@ class Button:
             return True
         return False
 
-    def built(self, display: pygame.Surface) -> None:
+    def blit(self, display: pygame.Surface) -> None:
         display.blit(self.image, self.pos)
-
-
-class Sound:
-    def __init__(self, path: str) -> None:
-        self.song = pygame.mixer.Sound(path)
-        self.event: pygame.Channel | None = None
-
-    def is_playing(self) -> bool:
-        if self.event and self.event.get_busy():
-            return True
-        return False
-
-    def play(self) -> None:
-        self.event = self.song.play()
-
-    def stop(self) -> None:
-        self.song.stop()

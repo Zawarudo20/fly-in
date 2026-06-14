@@ -117,10 +117,11 @@ class Drone:
         self.update(False)
 
 
-class map_solver:
-    def __init__(self, data: Map) -> None:
-        self.map = data
+class Map_solver:
+    def __init__(self) -> None:
         self.drones: list[Drone] = []
+
+    def solve(self, data: Map) -> None:
         for i in range(data.drones):
             drone = Drone(f"D{i}", data.start_hub, data.end_hub)
             data.start_hub.visitors.add(drone)
@@ -129,13 +130,11 @@ class map_solver:
             drone.path.append(drone.start)
             drone.path.append(drone.next_hub)
             self.drones.append(drone)
-
-    def solve(self) -> None:
         while True:
             is_all_arrived = True
             for drone in self.drones:
                 drone.update(True)
-                self.map.reset()
+                data.reset()
                 if drone.current_hub.name != drone.goal.name:
                     drone.path.append(drone.next_hub)
                 if drone.next_hub.name != drone.goal.name:
@@ -152,9 +151,9 @@ class map_solver:
             for drone in self.drones:
                 if i < len(drone.path):
                     all_writed = False
-                # if drone.path[i].name != drone.last_visited.name:
-                    print(f"{drone.name}-{drone.path[i].name} ", end="")
-                    drone.last_visited = drone.path[i]
+                    if drone.path[i].name != drone.last_visited.name:
+                        print(f"{drone.name}-{drone.path[i].name} ", end="")
+                        drone.last_visited = drone.path[i]
             print("")
             if all_writed:
                 break

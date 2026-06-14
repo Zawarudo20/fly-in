@@ -1,6 +1,9 @@
 run:
 	python3 Script/Fly_in.py config.txt
 
+debug:
+	python3 -m pdb Script/Fly_in.py config.txt
+
 install:
 	python3 -m pip install -r requirements.txt
 

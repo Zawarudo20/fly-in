@@ -1,4 +1,3 @@
-import sys
 import re
 import pydantic as pd
 from Hubs import Hub, Map
@@ -220,7 +219,7 @@ class Parser:
         return drones
 
     def get_map(self) -> Map:
-        with open(sys.argv[1]) as fd:
+        with open(self.file) as fd:
             text = fd.read()
         lines = text.split("\n")
         start_hub = None
