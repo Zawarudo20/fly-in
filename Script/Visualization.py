@@ -26,6 +26,33 @@ class Main_Menu:
         self.music = Button("assets/main_menu/music.png", (250, 430))
         self.exit = Button("assets/main_menu/exit.png", (250, 510))
 
+    @staticmethod
+    def __draw_text(text: str, size: int, color: str) -> pygame.Surface:
+        font = pygame.font.Font("assets/font/Minecraft.ttf", size)
+        r, g, b = rgb(color)
+        result = font.render(text, True, (r, g, b, 10))
+        return result
+
+    def error(self, text: str):
+        self.display.fill((0, 0, 0))
+        error_line = self.__draw_text(text, 20, "red")
+        size = error_line.size[0]
+        pos = ((1200 - size) // 2, 200)
+        self.display.blit(error_line, pos)
+        self.exit.change_pos((550 ,400))
+        self.exit.blit(self.display)
+        sound = pygame.Sound("assets/sounds/error.mp3")
+        pygame.Channel(1).play(sound)
+        while True:
+            if self.exit.is_just_pressed():
+                pygame.quit()
+                sys.exit(1)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit(0)
+            pygame.display.update()
+
     def visual(self) -> None:
         data = None
         while True:
@@ -55,8 +82,12 @@ class Main_Menu:
                     pygame.mixer.Channel(0).play(self.song, -1)
             if self.start.is_just_pressed():
                 if not data:
-                    data = self.parser.get_map()
-                    self.solver.solve(data)
+                    try:
+                        pygame.Channel(0).stop()
+                        data = self.parser.get_map()
+                        self.solver.solve(data)
+                    except Exception as err:
+                        self.error(err.__str__())
                 game = Game(data, self.solver)
                 game.visual(self.display)
                 if pygame.mixer.Channel(0).get_busy():
