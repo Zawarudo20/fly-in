@@ -257,15 +257,31 @@ connection: <hub1>-<hub2> [max_link_capacity=<int>]
 
 ### Documentation & References
 
-- **Asprite**: https://github.com/aseprite/aseprite
-  
-- **Assets**: 
-  - Gournd: https://aibyzz.itch.io/sc-farm-pack
-  - Cards: https://lyniadesign.itch.io/modular-fantasy-cards-asset-pack
-  
-- **Songs**: 
-  - Main_menu: https://www.youtube.com/watch?v=tRPrh5C8pdo&list=RDtRPrh5C8pdo&start_radio=1
-  - In game: https://www.youtube.com/watch?v=2b8TKhIz_ZY
+**Aseprite** — pixel art tool used for assets
+<img src="assets/readme/Aseprite.png" alt="Aseprite" width="40" align="left">
+[github.com/aseprite/aseprite](https://github.com/aseprite/aseprite)
+
+<br><br>
+
+**Assets**
+<img src="assets/readme/itch_icon.png" alt="itch.io" width="40" align="left">
+
+- Ground tiles: [SC Farm Pack](https://aibyzz.itch.io/sc-farm-pack)
+- Cards: [Modular Fantasy Cards Asset Pack](https://lyniadesign.itch.io/modular-fantasy-cards-asset-pack)
+
+<br><br>
+
+**Music**
+<img src="assets/readme/Sonic_Unleashed_logo.png" alt="Sonic Unleashed" width="40" align="left">
+
+- Main menu: [Sonic Unleashed theme](https://www.youtube.com/watch?v=tRPrh5C8pdo&list=RDtRPrh5C8pdo&start_radio=1)
+
+<img src="assets/readme/balatro_icon.png" alt="Balatro" width="40" align="left">
+
+- In-game: [Balatro track](https://www.youtube.com/watch?v=2b8TKhIz_ZY)
+
+<br>
+
 
 ### AI Usage
 
