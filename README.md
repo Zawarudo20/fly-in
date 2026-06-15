@@ -311,7 +311,7 @@ connection: <hub1>-<hub2> [max_link_capacity=<int>]
 
 <br>
 
-[github.com/aseprite/aseprite](https://github.com/aseprite/aseprite)
+- [github.com/aseprite/aseprite](https://github.com/aseprite/aseprite)
 
 <br>
 
@@ -328,13 +328,13 @@ connection: <hub1>-<hub2> [max_link_capacity=<int>]
 
 <img src="assets/readme/balatro_icon.png" alt="Balatro" width="40" align="left">
 
-- Main menu: [Sonic Unleashed theme](https://www.youtube.com/watch?v=tRPrh5C8pdo&list=RDtRPrh5C8pdo&start_radio=1)
+- Main menu: [Balatro track](https://www.youtube.com/watch?v=tRPrh5C8pdo&list=RDtRPrh5C8pdo&start_radio=1)
 
 <br>
 
 <img src="assets/readme/Sonic_Unleashed_logo.png" alt="Sonic Unleashed" width="40" align="left">
 
-- In-game: [Balatro track](https://www.youtube.com/watch?v=2b8TKhIz_ZY)
+- In-game: [Sonic Unleashed theme](https://www.youtube.com/watch?v=2b8TKhIz_ZY)
 
 <br>
 
