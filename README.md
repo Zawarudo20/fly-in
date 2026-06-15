@@ -30,6 +30,7 @@
 
 ## Description
 
+
 **fly-in** is an interactive drone traffic management and pathfinding visualization system. The project simulates complex logistics scenarios where multiple drones must navigate through interconnected hubs (nodes) with capacity constraints, restricted zones, and priority pathways. It combines graph-based pathfinding algorithms with real-time visualization to demonstrate efficient resource allocation and congestion management in constrained environments.
 
 The core goal is to route drones from a start hub to a goal hub while respecting:
@@ -181,6 +182,8 @@ The project employs a **dynamic A*-inspired pathfinding** algorithm with zone-aw
   - Music toggle: Enable/disable background music
   - Exit button: Quit application
 
+![Alt text](assets/readme/menu.png)
+
 - **In-Game**:
   - Start/Pause Simulation
   - Reset Drones position
@@ -188,16 +191,22 @@ The project employs a **dynamic A*-inspired pathfinding** algorithm with zone-aw
   - Zoom +/-
   - Change drones speed
 
+![Alt text](assets/readme/in_game.png)
+
 - **In-Game Menu** (Press SPACE):
   - Resume simulation
   - Music control (toggle audio)
   - Exit to main menu
+
+![Alt text](assets/readme/in_game_menu.png)
 
 - **Hover Information**: Each hub displays:
   - Hub name
   - Position (x, y)
   - capacity
   - Zone type
+
+![Alt text](assets/readme/in_hover.png)
 
 ### Animated Elements
 
