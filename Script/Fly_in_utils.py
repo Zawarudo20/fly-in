@@ -127,8 +127,6 @@ class Deck:
             self.display.blit(self.cards[i].image, (i * 200, 0))
 
     def add_card(self, hub: Hub, image: pygame.Surface) -> None:
-        if len(self.cards) > 5:
-            return
         for card in self.cards:
             if card.name == hub.name:
                 return

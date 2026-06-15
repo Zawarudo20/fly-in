@@ -25,12 +25,13 @@ class Main_Menu:
         self.start = Button("assets/main_menu/start.png", (250, 350))
         self.music = Button("assets/main_menu/music.png", (250, 430))
         self.exit = Button("assets/main_menu/exit.png", (250, 510))
+        pygame.display.set_icon(self.logo)
 
     @staticmethod
     def __draw_text(text: str, size: int, color: str) -> pygame.Surface:
         font = pygame.font.Font("assets/font/Minecraft.ttf", size)
         r, g, b = rgb(color)
-        result = font.render(text, True, (r, g, b, 10))
+        result = font.render(text, True, (r, g, b), (0, 0, 0, 0))
         return result
 
     def error(self, text: str) -> None:
@@ -225,16 +226,15 @@ class Game:
                 self.display.blit(wxy, pos)
 
     def __draw_buttons(self, pause: bool) -> None:
-        if pause:
-            self.buttons["resume"].blit(self.display)
-        else:
-            self.buttons["pause"].blit(self.display)
-        self.buttons["reset"].blit(self.display)
-        self.buttons["write"].blit(self.display)
-        self.buttons["speed_up"].blit(self.display)
-        self.buttons["speed_down"].blit(self.display)
-        self.buttons["zoom_in"].blit(self.display)
-        self.buttons["zoom_out"].blit(self.display)
+        for key in self.buttons:
+            if key == "resume" and pause:
+                self.buttons[key].blit(self.display)
+            elif key == "pause" and not pause:
+                self.buttons[key].blit(self.display)
+            elif key == "remove" or key == "menu_down" or key == "menu_up":
+                ...
+            else:
+                self.buttons[key].blit(self.display)
 
 # -----------------------drawing the menu-------------------------
     def __draw_menu(self) -> None:
@@ -280,12 +280,21 @@ class Game:
                    restricted: pygame.Surface,
                    blocked: pygame.Surface,
                    start_end: pygame.Surface) -> None:
-        normal = pygame.transform.scale(normal, (self.size, self.size))
-        priority = pygame.transform.scale(priority, (self.size, self.size))
-        restricted = pygame.transform.scale(restricted, (self.size, self.size))
-        blocked = pygame.transform.scale(blocked, (self.size, self.size))
-        start_end = pygame.transform.scale(start_end, (self.size * 2,
-                                                       self.size * 2))
+        normal = pygame.transform.scale(normal,
+                                        (self.size,
+                                         self.size)).convert_alpha()
+        priority = pygame.transform.scale(priority,
+                                          (self.size,
+                                           self.size)).convert_alpha()
+        restricted = pygame.transform.scale(restricted,
+                                            (self.size,
+                                             self.size)).convert_alpha()
+        blocked = pygame.transform.scale(blocked,
+                                         (self.size,
+                                          self.size)).convert_alpha()
+        start_end = pygame.transform.scale(start_end,
+                                           (self.size * 2,
+                                            self.size * 2)).convert_alpha()
         for hub in self.map.hubs:
             x = float(hub.position[0])
             y = float(hub.position[1])
@@ -321,7 +330,7 @@ class Game:
                                                    self.size // 2,
                                                    "black"),
                                   (x + self.size / 4, y - self.size / 2))
-                if mouse[0]:
+                if mouse[0] and len(self.deck.cards) <= 5:
                     self.deck.add_card(hub, box)
                     self.channels["sfx"].play(self.sounds["draw_card"])
 
@@ -339,7 +348,7 @@ class Game:
             elif not drone.movement.is_animating():
                 drone.has_arrived = True
 
-    def __check_buttons(self, screen: pygame.Surface) -> bool:
+    def __check_keys(self, screen: pygame.Surface) -> bool:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -358,7 +367,7 @@ class Game:
                     return self.menu.visual(screen, self.sounds["song"])
         return False
 
-    def check_click(self) -> dict:
+    def __check_buttons(self) -> dict:
         buttons = {"pause": False, "reset": False}
         if self.buttons["pause"].is_just_pressed():
             buttons["pause"] = True
@@ -439,7 +448,7 @@ class Game:
             tunrs = self.__draw_text(f"Turns: {index - 1}", 15, "black")
             self.display.blit(tunrs, (10, 10))
             self.__draw_menu()
-            if self.__check_buttons(screen):
+            if self.__check_keys(screen):
                 for drone in self.drones:
                     drone.pos = self.map.start_hub.position
                     drone.current_hub = drone.path[0]
@@ -449,7 +458,7 @@ class Game:
                                               drone.speed)
                 break
             self.__draw_buttons(pause)
-            check_buttons = self.check_click()
+            check_buttons = self.__check_buttons()
             if check_buttons["pause"]:
                 pause = not pause
             if check_buttons["reset"]:

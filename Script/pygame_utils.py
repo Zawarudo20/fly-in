@@ -56,7 +56,7 @@ class Animation:
         self.time = 0
         self.frames = []
         for i in range(frames):
-            frame = pygame.image.load(f"{path}{name}{i}.png")
+            frame = pygame.image.load(f"{path}{name}{i}.png").convert_alpha()
             self.frames.append(frame)
 
     def anim(self) -> pygame.Surface:
