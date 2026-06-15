@@ -1,36 +1,31 @@
 # *This project has been created as part of the 42 curriculum by Mbakha.*
 
 
-<table>
-<tr>
-<td valign="top">
+<div align="center">
+
+<img src="assets/main_menu/Logo.png" alt="Fly-In Logo" width="280">　　
+<img src="assets/readme/my_pfp.png" alt="Profile" width="140" style="border-radius: 50%; vertical-align: middle;">
+
+### *An interactive drone traffic management and pathfinding visualization system*
+
+</div>
+
+<br>
 
 ## Table of Contents
 
-* [Description](#description)
-* [Features](#features)
-* [Instructions](#instructions)
-* [Algorithm & Implementation Strategy](#algorithm--implementation-strategy)
-* [Visual Representation & User Experience](#visual-representation--user-experience)
-* [Configuration File Format](#configuration-file-format)
-* [Resources](#resources)
-* [Project Structure](#project-structure)
+- [Description](#description)
+- [Features](#features)
+- [Instructions](#instructions)
+- [Algorithm & Implementation Strategy](#algorithm--implementation-strategy)
+- [Visual Representation & User Experience](#visual-representation--user-experience)
+- [Configuration File Format](#configuration-file-format)
+- [Resources](#resources)
+- [Project Structure](#project-structure)
 
-</td>
+<br>
 
-<td valign="top" width="300">
-
-<img src="assets/main_menu/Logo.png" alt="Logo" width="400">
-
-</td>
-
-<td valign="center" width="300">
-
-<img src="assets/readme/my_pfp.png" alt="Logo" width="250">
-
-</td>
-</tr>
-</table>
+---
 
 
 ## Description
