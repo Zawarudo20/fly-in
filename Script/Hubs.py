@@ -70,6 +70,8 @@ class Map(pd.BaseModel):
     def validation(self) -> "Map":
         self.start_hub.size = self.drones
         self.end_hub.size = self.drones
+        self.start_hub.zone = "normal"
+        self.end_hub.zone = "normal"
         self.hubs.append(self.start_hub)
         self.hubs.append(self.end_hub)
         xi, yi = self.start_hub.position
