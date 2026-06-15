@@ -1,6 +1,31 @@
-*This project has been created as part of the 42 curriculum by Zawarudo20.*
+# *This project has been created as part of the 42 curriculum by Mbakha.*
 
----
+
+<table>
+<tr>
+<td valign="top">
+
+## Table of Contents
+
+* [Description](#description)
+* [Features](#features)
+* [Instructions](#instructions)
+* [Algorithm & Implementation Strategy](#algorithm--implementation-strategy)
+* [Visual Representation & User Experience](#visual-representation--user-experience)
+* [Configuration File Format](#configuration-file-format)
+* [Resources](#resources)
+* [Project Structure](#project-structure)
+
+</td>
+
+<td valign="top" width="300">
+
+<img src="assets/main_menu/Logo.png" alt="Logo" width="250">
+
+</td>
+</tr>
+</table>
+
 
 ## Description
 
@@ -10,7 +35,6 @@ The core goal is to route drones from a start hub to a goal hub while respecting
 - **Hub capacity limits**: Maximum number of drones that can occupy each hub simultaneously
 - **Link capacity limits**: Maximum number of drones that can traverse connections between hubs
 - **Zone restrictions**: Special zones (normal, blocked, restricted, priority) with different traversal costs
-- **Dynamic pathfinding**: Drones adaptively route around congested areas to optimize throughput
 
 ---
 
@@ -18,11 +42,10 @@ The core goal is to route drones from a start hub to a goal hub while respecting
 
 - **Visual Network Simulation**: Real-time pygame-based visualization of drone movement through a multi-hub network
 - **Intelligent Pathfinding**: A* and Dijkstra-inspired pathfinding with dynamic cost adjustments based on zone types and congestion
-- **Configuration-Driven Scenarios**: Define custom drone networks, hub layouts, and constraints via human-readable config files
+- **Configuration-Driven Scenarios**: Define custom hub layout, drones numbers and connection between hubs
 - **Capacity Management**: Track and enforce capacity limits on both hubs and connections
 - **Zone-Based Routing**: Support for multiple zone types (normal, restricted, priority, blocked) with different traversal penalties
 - **Interactive UI**: Menu system with music controls, start/exit buttons, and hub information cards
-- **Animated Drones**: Sprite-based drone animations for engaging visual feedback
 
 ---
 
@@ -30,27 +53,16 @@ The core goal is to route drones from a start hub to a goal hub while respecting
 
 ### Compilation & Installation
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/Zawarudo20/fly-in.git
-   cd fly-in
-   ```
-
-2. **Install dependencies**:
+1. **Install dependencies**:
    ```bash
    make install
    ```
    This installs the required packages from `requirements.txt`:
    - `pygame-ce` - Community Edition of Pygame for rendering and events
-   - `webcolors` - CSS color name to RGB conversion
+   - `webcolors` - color name to RGB conversion
    - `pydantic` - Data validation and modeling
    - `flake8` - Code linting
    - `mypy` - Static type checking
-
-3. **Verify setup** (optional lint and type checking):
-   ```bash
-   make lint
-   ```
 
 ### Running the Application
 
@@ -80,6 +92,14 @@ For interactive debugging with the Python debugger:
 make debug
 ```
 
+### Verify:
+
+verify flake8 and mypy
+
+   ```bash
+   make lint
+   ```
+
 ### Cleaning
 
 Remove cache files and compiled bytecode:
@@ -97,9 +117,9 @@ make clean
 The project employs a **dynamic A*-inspired pathfinding** algorithm with zone-aware cost functions:
 
 1. **Cost Calculation Per Zone**:
-   - `normal` zone: `g = current.g + 2` (baseline cost)
-   - `restricted` zone: `g = current.g + 4` (high penalty for narrow passages)
-   - `priority` zone: `g = current.g + 1.5` (low cost for fast lanes)
+   - `normal` zone: 2 costs (baseline cost)
+   - `restricted` zone: 4 costs (high penalty for narrow passages)
+   - `priority` zone: 1.5 costs (low cost for fast lanes)
    - `blocked` zone: skipped entirely (impassable)
 
 2. **Congestion-Aware Routing**:
@@ -138,17 +158,6 @@ The project employs a **dynamic A*-inspired pathfinding** algorithm with zone-aw
 - Enforces global constraints during updates
 - Computes min/max bounds for rendering
 
-### Update Cycle
-
-Each frame:
-1. **Drone Movement Interpolation**: Update sprite position along current path segment
-2. **Congestion Check**: For each drone, evaluate if it can move to the next hub
-   - Check hub capacity
-   - Check connection capacity
-   - Check downstream hub availability
-3. **Pathfinding Trigger**: If blocked, run pathfinding to find an alternative
-4. **Hub/Line Update**: Add/remove drone from visitor sets as it progresses
-
 ---
 
 ## Visual Representation & User Experience
@@ -156,15 +165,13 @@ Each frame:
 ### Rendering System
 
 - **Screen Resolution**: 1200×700 pixels
-- **Grid-Based Layout**: Hubs positioned on a discrete 2D grid
+- **Grid-Based Layout**: Hubs positioned on a discrete 2D isometric grid
 - **Color-Coded Hubs**:
   - Start hub (green) – initial position for all drones
   - Goal hub (green) – destination for all drones
-  - Normal hubs (varied colors) – standard waypoints
-  - Restricted zones (red) – slow, capacity-limited paths
-  - Priority zones (cyan) – fast, limited-capacity bypass routes
-  - Waiting areas (blue) – queue management zones
-  - Convergence points (yellow) – merge points with congestion
+  - Normal hubs (varied colors) – normal hub: 1 turn
+  - Restricted zones – slow hub: 2 turns
+  - Priority zones – prefered in pathfinding: 1 turn
 
 ### Interactive Elements
 
@@ -172,7 +179,14 @@ Each frame:
   - Start button: Launch simulation
   - Music toggle: Enable/disable background music
   - Exit button: Quit application
-  
+
+- **In-Game**:
+  - Start/Pause Simulation
+  - Reset Drones position
+  - Write path of each drones in terminal
+  - Zoom +/-
+  - Change drones speed
+
 - **In-Game Menu** (Press SPACE):
   - Resume simulation
   - Music control (toggle audio)
@@ -181,7 +195,7 @@ Each frame:
 - **Hover Information**: Each hub displays:
   - Hub name
   - Position (x, y)
-  - Current occupancy vs. capacity
+  - capacity
   - Zone type
 
 ### Animated Elements
@@ -196,6 +210,7 @@ Each frame:
 - **Visual Congestion**: Hub and connection colors intensify as capacity approaches limits
 - **Sound Design**:
   - Background menu music for ambiance
+  - Sound for drones when all move 1 turn
   - Click sounds for UI interactions
   - Error sounds for invalid actions
 - **Minecraft Font**: Retro pixelated aesthetic for immersion
@@ -209,8 +224,8 @@ Define your drone network and constraints in a `.txt` configuration file:
 ```
 nb_drones: <integer>
 
-start_hub: <name> <x> <y> [color=<color> max_drones=<int>]
-end_hub: <name> <x> <y> [color=<color> max_drones=<int>]
+start_hub: <name> <x> <y>
+end_hub: <name> <x> <y>
 hub: <name> <x> <y> [color=<color> max_drones=<int> zone=<zone>]
 
 connection: <hub1>-<hub2> [max_link_capacity=<int>]
@@ -219,21 +234,12 @@ connection: <hub1>-<hub2> [max_link_capacity=<int>]
 ### Metadata Options
 
 **Hub Metadata**:
-- `color`: CSS color name (e.g., orange, blue, red, cyan, yellow)
+- `color`: color name (e.g., orange, blue, red, cyan, yellow)
 - `max_drones`: Maximum capacity for this hub
 - `zone`: One of [normal, restricted, priority, blocked]
 
 **Connection Metadata**:
 - `max_link_capacity`: Maximum drones traversing this connection simultaneously (default: 1)
-
-### Example
-
-See `config.txt` for a complex hard-mode scenario with:
-- 12 drones
-- Multiple sequential gates (bottlenecks)
-- Restricted tunnels and priority bypass routes
-- Waiting areas for queue management
-- Final convergence point testing throughput limits
 
 ---
 
@@ -241,30 +247,19 @@ See `config.txt` for a complex hard-mode scenario with:
 
 ### Documentation & References
 
-- **Pygame Community Edition**: https://pyga.me/
-  - Comprehensive guide on game rendering, event handling, and sprite management
+- **Asprite**: https://github.com/aseprite/aseprite
   
-- **Pydantic v2**: https://docs.pydantic.dev/
-  - Data validation and type-safe configuration parsing
+- **Assets**: 
+  - Gournd: https://aibyzz.itch.io/sc-farm-pack
+  - Cards: https://lyniadesign.itch.io/modular-fantasy-cards-asset-pack
   
-- **Graph Algorithms**: 
-  - A* Pathfinding: https://en.wikipedia.org/wiki/A*_search_algorithm
-  - Dijkstra's Algorithm: https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
-  
-- **Constraint Satisfaction Problems (CSPs)**:
-  - Multi-agent pathfinding with capacity constraints: https://en.wikipedia.org/wiki/Multi-agent_pathfinding
+- **Songs**: 
+  - Main_menu: https://www.youtube.com/watch?v=tRPrh5C8pdo&list=RDtRPrh5C8pdo&start_radio=1
+  - In game: https://www.youtube.com/watch?v=2b8TKhIz_ZY
 
 ### AI Usage
 
-AI (ChatGPT) was consulted for:
-
-1. **Algorithm Optimization**: Refining A* implementation to handle zone-based costs and dynamic replanning
-2. **Pydantic Validation**: Designing robust config file parsing with custom validators for color names and zone types
-3. **Pygame Integration**: Structuring the visualization layer, sprite animation logic, and event-driven UI
-4. **Code Structure**: Organizing modules (Hubs, Drones, Visualization) for maintainability and separation of concerns
-5. **Documentation**: Generating comprehensive docstrings and this README to explain implementation details
-
-The core algorithmic design (zone-aware costs, capacity constraints, dynamic pathfinding) was authored independently.
+AI was consulted for Understanding how pygame works
 
 ---
 
@@ -292,16 +287,3 @@ fly-in/
 ```
 
 ---
-
-## Future Enhancements
-
-- [ ] Statistics dashboard (throughput, average wait time, bottleneck analysis)
-- [ ] Custom config generator UI
-- [ ] Replay/recording system for successful runs
-- [ ] Performance profiling for large-scale simulations
-- [ ] Multi-objective optimization (minimize time vs. energy consumption)
-- [ ] Network topology learning and adaptation
-
----
-
-**Enjoy exploring the fly-in drone traffic management system!** 🚁
