@@ -31,7 +31,7 @@ class Main_Menu:
     def __draw_text(text: str, size: int, color: str) -> pygame.Surface:
         font = pygame.font.Font("assets/font/Minecraft.ttf", size)
         r, g, b = rgb(color)
-        result = font.render(text, True, (r, g, b), (0, 0, 0, 0))
+        result = font.render(text, True, (r, g, b))
         return result
 
     def error(self, text: str) -> None:
@@ -66,6 +66,8 @@ class Main_Menu:
             self.start.blit(self.display)
             self.exit.blit(self.display)
             self.music.blit(self.display)
+            login = self.__draw_text("by: MBAKHA", 20, "black")
+            self.display.blit(login, (30, 640))
             image = self.drone.anim()
             image = pygame.transform.scale(image, (100, 100))
             self.display.blit(image, (860, 310))

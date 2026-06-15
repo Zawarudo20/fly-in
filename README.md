@@ -12,7 +12,13 @@
 
 <br>
 
+<div align="center">
+
 ## Table of Contents
+
+<br>
+
+<div align="left">
 
 - [Description](#description)
 - [Features](#features)
@@ -25,11 +31,14 @@
 
 <br>
 
----
-
+<div align="center">
 
 ## Description
+![description](https://media.tenor.com/_V8TTKAXYB0AAAAM/spongebob-squarepants-sunglasses.gif)
 
+<div align="left">
+
+<br>
 
 **fly-in** is an interactive drone traffic management and pathfinding visualization system. The project simulates complex logistics scenarios where multiple drones must navigate through interconnected hubs (nodes) with capacity constraints, restricted zones, and priority pathways. It combines graph-based pathfinding algorithms with real-time visualization to demonstrate efficient resource allocation and congestion management in constrained environments.
 
@@ -40,10 +49,18 @@ The core goal is to route drones from a start hub to a goal hub while respecting
 
 ---
 
+<div align="center">
+
 ## Features
 
+![features](https://media.tenor.com/y438NMTZ_F8AAAAM/awesome-feature-sh1n-boo.gif)
+
+<div align="left">
+
+<br>
+
 - **Visual Network Simulation**: Real-time pygame-based visualization of drone movement through a multi-hub network
-- **Intelligent Pathfinding**: A* and Dijkstra-inspired pathfinding with dynamic cost adjustments based on zone types and congestion
+- **Intelligent Pathfinding**: Dijkstra pathfinding with dynamic cost adjustments based on zone types and congestion
 - **Configuration-Driven Scenarios**: Define custom hub layout, drones numbers and connection between hubs
 - **Capacity Management**: Track and enforce capacity limits on both hubs and connections
 - **Zone-Based Routing**: Support for multiple zone types (normal, restricted, priority, blocked) with different traversal penalties
@@ -51,7 +68,15 @@ The core goal is to route drones from a start hub to a goal hub while respecting
 
 ---
 
+<div align="center">
+
 ## Instructions
+
+![instructions](https://media.tenor.com/OTDgkmLi8HsAAAAM/instructions.gif)
+
+<div align="left">
+
+<br>
 
 ### Compilation & Installation
 
@@ -112,11 +137,18 @@ make clean
 
 ---
 
+<div align="center">
+
 ## Algorithm & Implementation Strategy
+
+<br>
+<div align="left">
 
 ### Pathfinding Algorithm
 
-The project employs a **dynamic A*-inspired pathfinding** algorithm with zone-aware cost functions:
+The project employs a **Dijkstra pathfinding** algorithm with zone-aware cost functions:
+
+![Dijkstra](https://miro.medium.com/v2/resize:fit:1400/1*3aibaGt1-zimnwreliwX0A.gif)
 
 1. **Cost Calculation Per Zone**:
    - `normal` zone: 2 costs (baseline cost)
@@ -162,7 +194,12 @@ The project employs a **dynamic A*-inspired pathfinding** algorithm with zone-aw
 
 ---
 
+<div align="center">
+
 ## Visual Representation & User Experience
+
+<br>
+<div align="left">
 
 ### Rendering System
 
@@ -227,7 +264,13 @@ The project employs a **dynamic A*-inspired pathfinding** algorithm with zone-aw
 
 ---
 
+
+<div align="center">
+
 ## Configuration File Format
+
+<br>
+<div align="left">
 
 Define your drone network and constraints in a `.txt` configuration file:
 
@@ -253,30 +296,43 @@ connection: <hub1>-<hub2> [max_link_capacity=<int>]
 
 ---
 
+<div align="center">
+
 ## Resources
+![resources](https://media.tenor.com/USPVkGoH-KkAAAAM/jungle-wood-smash.gif)
+
+<br>
+<div align="left">
 
 ### Documentation & References
 
 **Aseprite** — pixel art tool used for assets
-<img src="assets/readme/Aseprite.png" alt="Aseprite" width="40" align="left">
+<img src="assets/readme/Aseprite.png" alt="Aseprite" width="30" align="left">
+
+<br>
+
 [github.com/aseprite/aseprite](https://github.com/aseprite/aseprite)
 
-<br><br>
+<br>
 
 **Assets**
-<img src="assets/readme/itch_icon.png" alt="itch.io" width="40" align="left">
+<img src="assets/readme/itch_icon.png" alt="itch.io" width="35" align="left">
+
+<br>
 
 - Ground tiles: [SC Farm Pack](https://aibyzz.itch.io/sc-farm-pack)
 - Cards: [Modular Fantasy Cards Asset Pack](https://lyniadesign.itch.io/modular-fantasy-cards-asset-pack)
 
-<br><br>
-
 **Music**
-<img src="assets/readme/Sonic_Unleashed_logo.png" alt="Sonic Unleashed" width="40" align="left">
+
+
+<img src="assets/readme/balatro_icon.png" alt="Balatro" width="40" align="left">
 
 - Main menu: [Sonic Unleashed theme](https://www.youtube.com/watch?v=tRPrh5C8pdo&list=RDtRPrh5C8pdo&start_radio=1)
 
-<img src="assets/readme/balatro_icon.png" alt="Balatro" width="40" align="left">
+<br>
+
+<img src="assets/readme/Sonic_Unleashed_logo.png" alt="Sonic Unleashed" width="40" align="left">
 
 - In-game: [Balatro track](https://www.youtube.com/watch?v=2b8TKhIz_ZY)
 
@@ -289,7 +345,12 @@ AI was consulted for Understanding how pygame works
 
 ---
 
+<div align="center">
+
 ## Project Structure
+
+<br>
+<div align="left">
 
 ```
 fly-in/
@@ -305,6 +366,7 @@ fly-in/
 │   ├── Drone/              # Drone animation frames
 │   ├── main_menu/          # Menu UI images
 │   ├── font/               # Minecraft.ttf
+│   └── readme/             # For this file
 │   └── sounds/             # Background music and SFX
 ├── config.txt              # Example configuration
 ├── requirements.txt        # Python dependencies
