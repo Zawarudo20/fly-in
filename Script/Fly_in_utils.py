@@ -1,49 +1,59 @@
 import pygame
 from pygame_utils import Movement, Button
 from Hubs import Hub
+from sys import exit
 from webcolors import name_to_rgb as rgb
 
 
 class Menu:
     def __init__(self) -> None:
-        self.buttons = {"music": Button("assets/main_menu/music.png",
-                                        (520, 300)),
-                        "exit": Button("assets/main_menu/exit.png",
-                                       (520, 450)),
-                        "resume": Button("assets/main_menu/resume.png",
-                                         (520, 220))}
+        self.music = Button("assets/main_menu/music.png",
+                            (520, 300))
+        self.exit = Button("assets/main_menu/exit.png",
+                           (520, 450))
+        self.resume = Button("assets/main_menu/resume.png",
+                             (520, 220))
         self.display = pygame.Surface((1200, 700))
         self.menu = pygame.image.load("assets/main_menu/game_menu.png")
         self.display.fill((0, 0, 0))
         self.display.blit(self.menu, (420, 100))
-        self.buttons["music"].blit(self.display)
-        self.buttons["exit"].blit(self.display)
-        self.buttons["resume"].blit(self.display)
+        self.reblit()
 
     def reblit(self) -> None:
-        self.buttons["music"].blit(self.display)
-        self.buttons["exit"].blit(self.display)
-        self.buttons["resume"].blit(self.display)
+        self.music.blit(self.display)
+        self.exit.blit(self.display)
+        self.resume.blit(self.display)
 
     def visual(self, screen: pygame.Surface, song: pygame.Sound) -> bool:
+        if pygame.mixer.Channel(0).get_busy():
+            self.music.image = pygame.image.load(
+                "assets/main_menu/music.png")
+        else:
+            self.music.image = pygame.image.load(
+                "assets/""main_menu/music_off.png")
+        self.reblit()
         while True:
-            if self.buttons["resume"].is_just_pressed():
+            if self.resume.is_just_pressed():
                 return False
-            if self.buttons["music"].is_just_pressed():
+            if self.music.is_just_pressed():
                 if pygame.mixer.Channel(0).get_busy():
-                    self.buttons["music"].image = pygame.image.load(
+                    self.music.image = pygame.image.load(
                         "assets/""main_menu/music_off.png")
                     pygame.mixer.Channel(0).stop()
                 else:
-                    self.buttons["music"].image = pygame.image.load(
+                    self.music.image = pygame.image.load(
                         "assets/main_menu/music.png")
                     pygame.mixer.Channel(0).play(song, -1)
                 self.reblit()
-            if self.buttons["exit"].is_just_pressed():
+            if self.exit.is_just_pressed():
                 return True
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
+                    exit(0)
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        return False
             screen.blit(self.display, (0, 0))
             pygame.display.update()
 

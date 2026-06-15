@@ -33,13 +33,13 @@ class Main_Menu:
         result = font.render(text, True, (r, g, b, 10))
         return result
 
-    def error(self, text: str):
+    def error(self, text: str) -> None:
         self.display.fill((0, 0, 0))
         error_line = self.__draw_text(text, 20, "red")
         size = error_line.size[0]
         pos = ((1200 - size) // 2, 200)
         self.display.blit(error_line, pos)
-        self.exit.change_pos((550 ,400))
+        self.exit.change_pos((550, 400))
         self.exit.blit(self.display)
         sound = pygame.Sound("assets/sounds/error.mp3")
         pygame.Channel(1).play(sound)
@@ -83,15 +83,22 @@ class Main_Menu:
             if self.start.is_just_pressed():
                 if not data:
                     try:
-                        pygame.Channel(0).stop()
                         data = self.parser.get_map()
                         self.solver.solve(data)
                     except Exception as err:
+                        pygame.Channel(0).stop()
                         self.error(err.__str__())
+                        return
                 game = Game(data, self.solver)
                 game.visual(self.display)
                 if pygame.mixer.Channel(0).get_busy():
+                    self.music.image = pygame.image.load(
+                        "assets/main_menu/music.png")
                     pygame.mixer.Channel(0).play(self.song, -1)
+                else:
+                    self.music.image = pygame.image.load(
+                        "assets/""main_menu/music_off.png")
+                self.music.blit(self.display)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -271,31 +278,40 @@ class Game:
                    normal: pygame.Surface,
                    priority: pygame.Surface,
                    restricted: pygame.Surface,
-                   blocked: pygame.Surface) -> None:
+                   blocked: pygame.Surface,
+                   start_end: pygame.Surface) -> None:
         normal = pygame.transform.scale(normal, (self.size, self.size))
         priority = pygame.transform.scale(priority, (self.size, self.size))
         restricted = pygame.transform.scale(restricted, (self.size, self.size))
         blocked = pygame.transform.scale(blocked, (self.size, self.size))
+        start_end = pygame.transform.scale(start_end, (self.size * 2,
+                                                       self.size * 2))
         for hub in self.map.hubs:
             x = float(hub.position[0])
             y = float(hub.position[1])
             x, y = self.__draw_pos((x * 5, y * 5))
-            if hub.zone == "normal":
-                box = normal.copy()
-            elif hub.zone == "priority":
-                box = priority.copy()
-            elif hub.zone == "restricted":
-                box = restricted.copy()
-            elif hub.zone == "blocked":
-                box = blocked.copy()
-            width, height = box.get_size()
-            for h in range(height):
-                for w in range(width):
-                    color = box.get_at((w, h))
-                    if color == (255, 255, 255):
-                        box.set_at((w, h),
-                                   rgb(hub.color))
-            self.display.blit(box, (x, y - self.size / 4))
+            if (hub.name == self.map.start_hub.name or
+               hub.name == self.map.end_hub.name):
+                box = start_end
+                self.display.blit(box, (x - self.size / 2, y - self.size))
+                self.display.set_at((x, y), rgb("white"))
+            else:
+                if hub.zone == "normal":
+                    box = normal.copy()
+                elif hub.zone == "priority":
+                    box = priority.copy()
+                elif hub.zone == "restricted":
+                    box = restricted.copy()
+                elif hub.zone == "blocked":
+                    box = blocked.copy()
+                width, height = box.get_size()
+                for h in range(height):
+                    for w in range(width):
+                        color = box.get_at((w, h))
+                        if color == (255, 255, 255):
+                            box.set_at((w, h),
+                                       rgb(hub.color))
+                self.display.blit(box, (x, y - self.size / 4))
     # --------------------CHECK MOUSE POSITION------------------------
             xm, xy = pygame.mouse.get_pos()
             rect = box.get_rect(topleft=(x, y))
@@ -394,6 +410,7 @@ class Game:
         priority = pygame.image.load("assets/box/box_priority.png")
         restricted = pygame.image.load("assets/box/box_restricted.png")
         blocked = pygame.image.load("assets/box/box_blocked.png")
+        start_end = pygame.image.load("assets/box/start_end.png")
         pause = True
         index = 1
         if self.channels["music"].get_busy():
@@ -402,7 +419,7 @@ class Game:
             self.display.fill((125, 255, 255))
             self.__draw_grid(ground, borders, water)
             self.__draw_line()
-            self.__draw_hub(normal, priority, restricted, blocked)
+            self.__draw_hub(normal, priority, restricted, blocked, start_end)
             all_arrived = True
             for drone in self.drones:
                 self.__draw_drone(drone, pause)
@@ -423,6 +440,13 @@ class Game:
             self.display.blit(tunrs, (10, 10))
             self.__draw_menu()
             if self.__check_buttons(screen):
+                for drone in self.drones:
+                    drone.pos = self.map.start_hub.position
+                    drone.current_hub = drone.path[0]
+                    drone.next_hub = drone.path[1]
+                    drone.movement = Movement(drone.start.position,
+                                              drone.next_hub.position,
+                                              drone.speed)
                 break
             self.__draw_buttons(pause)
             check_buttons = self.check_click()
