@@ -20,7 +20,13 @@
 
 <td valign="top" width="300">
 
-<img src="assets/main_menu/Logo.png" alt="Logo" width="250">
+<img src="assets/main_menu/Logo.png" alt="Logo" width="400">
+
+</td>
+
+<td valign="center" width="300">
+
+<img src="assets/readme/my_pfp.png" alt="Logo" width="250">
 
 </td>
 </tr>
