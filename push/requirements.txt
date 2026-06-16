@@ -1,5 +1,0 @@
-pygame-ce
-webcolors
-pydantic
-flake8
-mypy
