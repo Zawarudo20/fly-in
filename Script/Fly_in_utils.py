@@ -14,7 +14,8 @@ class Menu:
         self.resume = Button("assets/main_menu/resume.png",
                              (520, 220))
         self.display = pygame.Surface((1200, 700))
-        self.menu = pygame.image.load("assets/main_menu/game_menu.png")
+        self.menu = pygame.image.load("assets/main_menu"
+                                      "/game_menu.png").convert()
         self.display.fill((0, 0, 0))
         self.display.blit(self.menu, (420, 100))
         self.reblit()
@@ -27,10 +28,10 @@ class Menu:
     def visual(self, screen: pygame.Surface, song: pygame.Sound) -> bool:
         if pygame.mixer.Channel(0).get_busy():
             self.music.image = pygame.image.load(
-                "assets/main_menu/music.png")
+                "assets/main_menu/music.png").convert()
         else:
             self.music.image = pygame.image.load(
-                "assets/""main_menu/music_off.png")
+                "assets/""main_menu/music_off.png").convert()
         self.reblit()
         while True:
             if self.resume.is_just_pressed():
@@ -38,11 +39,11 @@ class Menu:
             if self.music.is_just_pressed():
                 if pygame.mixer.Channel(0).get_busy():
                     self.music.image = pygame.image.load(
-                        "assets/""main_menu/music_off.png")
+                        "assets/""main_menu/music_off.png").convert()
                     pygame.mixer.Channel(0).stop()
                 else:
                     self.music.image = pygame.image.load(
-                        "assets/main_menu/music.png")
+                        "assets/main_menu/music.png").convert()
                     pygame.mixer.Channel(0).play(song, -1)
                 self.reblit()
             if self.exit.is_just_pressed():
@@ -106,7 +107,7 @@ class Card:
 class Deck:
     def __init__(self) -> None:
         self.display = pygame.Surface((1200, 300), pygame.SRCALPHA)
-        self.card = pygame.image.load("assets/menu/card.png")
+        self.card = pygame.image.load("assets/menu/card.png").convert()
         self.cards: list[Card] = []
         self.animation = Movement((0, 400), (0, 400), 20)
         self.pos = (0.0, 400.0)

@@ -17,10 +17,13 @@ class Main_Menu:
         self.parser = parser
         self.solver = solver
         self.display = pygame.display.set_mode((1200, 700))
-        self.menu_logo = pygame.image.load("assets/main_menu/menu_logo.png")
+        self.menu_logo = pygame.image.load("assets/main_menu"
+                                           "/menu_logo.png").convert_alpha()
         self.menu_logo = pygame.transform.scale(self.menu_logo, (400, 400))
-        self.logo = pygame.image.load("assets/main_menu/logo.png")
-        self.menu = pygame.image.load("assets/main_menu/menu.png")
+        self.logo = pygame.image.load("assets/main_menu/"
+                                      "logo.png").convert_alpha()
+        self.menu = pygame.image.load("assets/main_menu/"
+                                      "menu.png").convert()
         self.drone = Animation("Drone", "assets/Drone/", 0, 8, 10, 8)
         self.start = Button("assets/main_menu/start.png", (250, 350))
         self.music = Button("assets/main_menu/music.png", (250, 430))
@@ -77,11 +80,11 @@ class Main_Menu:
             if self.music.is_just_pressed():
                 if pygame.mixer.Channel(0).get_busy():
                     self.music.image = pygame.image.load(
-                        "assets/main_menu/music_off.png")
+                        "assets/main_menu/music_off.png").convert_alpha()
                     pygame.mixer.Channel(0).stop()
                 else:
                     self.music.image = pygame.image.load(
-                        "assets/main_menu/music.png")
+                        "assets/main_menu/music.png").convert_alpha()
                     pygame.mixer.Channel(0).play(self.song, -1)
             if self.start.is_just_pressed():
                 if not data:
@@ -96,11 +99,11 @@ class Main_Menu:
                 game.visual(self.display)
                 if pygame.mixer.Channel(0).get_busy():
                     self.music.image = pygame.image.load(
-                        "assets/main_menu/music.png")
+                        "assets/main_menu/music.png").convert_alpha()
                     pygame.mixer.Channel(0).play(self.song, -1)
                 else:
                     self.music.image = pygame.image.load(
-                        "assets/""main_menu/music_off.png")
+                        "assets/""main_menu/music_off.png").convert_alpha()
                 self.music.blit(self.display)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -408,20 +411,32 @@ class Game:
                                       drone.speed)
 
     def visual(self, screen: pygame.Surface) -> None:
-        ground = pygame.image.load("assets/Ground/ground.png")
-        borders = {"x": pygame.image.load("assets/Ground/ground_x.png"),
-                   "y": pygame.image.load("assets/Ground/ground_y.png"),
-                   "xy": pygame.image.load("assets/Ground/ground_xy.png")}
-        water = {"x": pygame.image.load("assets/Ground/water_x.png"),
-                 "y": pygame.image.load("assets/Ground/water_y.png"),
-                 "xy": pygame.image.load("assets/Ground/water_xy.png"),
-                 "x0": pygame.image.load("assets/Ground/water_x0.png"),
-                 "y0": pygame.image.load("assets/Ground/water_y0.png")}
-        normal = pygame.image.load("assets/box/box_normal.png")
-        priority = pygame.image.load("assets/box/box_priority.png")
-        restricted = pygame.image.load("assets/box/box_restricted.png")
-        blocked = pygame.image.load("assets/box/box_blocked.png")
-        start_end = pygame.image.load("assets/box/start_end.png")
+        ground = pygame.image.load("assets/Ground/ground.png").convert_alpha()
+        borders = {"x": pygame.image.load("assets/Ground/"
+                                          "ground_x.png").convert_alpha(),
+                   "y": pygame.image.load("assets/Ground/"
+                                          "ground_y.png").convert_alpha(),
+                   "xy": pygame.image.load("assets/Ground/"
+                                           "ground_xy.png").convert_alpha()}
+        water = {"x": pygame.image.load("assets/Ground/"
+                                        "water_x.png").convert_alpha(),
+                 "y": pygame.image.load("assets/Ground/"
+                                        "water_y.png").convert_alpha(),
+                 "xy": pygame.image.load("assets/Ground/"
+                                         "water_xy.png").convert_alpha(),
+                 "x0": pygame.image.load("assets/Ground/"
+                                         "water_x0.png").convert_alpha(),
+                 "y0": pygame.image.load("assets/Ground/"
+                                         "water_y0.png").convert_alpha()}
+        normal = pygame.image.load("assets/box/box_normal.png").convert_alpha()
+        priority = pygame.image.load("assets/box/"
+                                     "box_priority.png").convert_alpha()
+        restricted = pygame.image.load("assets/box/"
+                                       "box_restricted.png").convert_alpha()
+        blocked = pygame.image.load("assets/box/"
+                                    "box_blocked.png").convert_alpha()
+        start_end = pygame.image.load("assets/box/"
+                                      "start_end.png").convert_alpha()
         pause = True
         index = 1
         if self.channels["music"].get_busy():

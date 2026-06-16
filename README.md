@@ -375,3 +375,9 @@ fly-in/
 ```
 
 ---
+
+<div align="center">
+
+![thanks](https://media4.giphy.com/media/v1.Y2lkPTZjMDliOTUyM3dvM2xyZzMzNTJqa2s5dmh4NTYybTFsa3l6M2dnNGMyemY4OXJrbSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/GploQVKeECo6uCG5Sf/giphy.gif)
+
+.

@@ -81,7 +81,7 @@ class Button:
     def __init__(self,
                  path: str,
                  pos: tuple[int | float, int | float]) -> None:
-        self.image = pygame.image.load(path)
+        self.image = pygame.image.load(path).convert_alpha()
         self.pos = pos
         self.rect = self.image.get_rect(topleft=pos)
         self.sound = pygame.Sound("assets/sounds/click.mp3")
